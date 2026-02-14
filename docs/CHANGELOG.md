@@ -1,0 +1,12 @@
+# Changelog
+
+## 2026-02-14
+Initialized the My Cellar project with Svelte 5, Vite, Tailwind CSS v4, and Vitest. Set up a mobile-first layout shell with bottom tab bar navigation (Dashboard, Add, Search, Settings), hash-based routing, and placeholder views. Added GitHub Actions workflow for automated deployment to GitHub Pages.
+
+Added data model and local storage layer. Defined TypeScript types for bottles, history entries, and prices. Implemented IndexedDB-based persistence using the `idb` library with full CRUD operations. Created utility functions for quantity calculation from history and duplicate detection (type + vintage + name matching).
+
+Implemented the Dashboard view as the default landing page. Displays cellar statistics (total bottle count, breakdown by wine type, top 3 regions), a feed of the 10 most recent activity entries, and an empty state with CTA button when no bottles exist. Updated the sync status badge to read "Offline". Added dashboard utility functions with comprehensive unit tests and Dashboard component integration tests.
+
+Implemented the Add Bottle form view. Users can add new wines with all required fields (name, vintage, type, country, region, quantity) and optional fields (grape varieties as free-text tags, location, rating, price with currency defaulting to EUR, notes). Form validates required fields inline on submit. Duplicate detection (type + vintage + name, case-insensitive) shows a confirmation banner to merge quantity into the existing bottle's history. Extracted reusable FormField and GrapeTagInput sub-components. Added form validation utility with unit tests (24 tests) and AddBottle integration tests (13 tests).
+
+Implemented the Search & Filter view. Users can search bottles by name (case-insensitive partial match), filter by wine type, country, region, vintage range, and minimum rating. Filters are presented in a collapsible panel with active filter count badge. Results are sortable by name (default), vintage, rating, quantity, or recently added. All filter options (country, region) are dynamically derived from cellar contents. Bottles are displayed as read-only cards showing name, vintage, type badge, origin, quantity, and rating. Includes empty states for both empty cellar (with CTA) and no matching results. Added search utility functions with unit tests (28 tests), BottleCard tests (5 tests), FilterPanel tests (9 tests), and Search view integration tests (11 tests).

@@ -1,0 +1,63 @@
+# Roadmap
+
+Updated at 2026-02-14
+
+## Step 1: Project Setup & Foundation ✅
+- [x] Initialize Svelte + Vite project with mobile-first configuration
+- [x] Configure build for minimal bundle size optimization (~15-20kb target)
+- [x] Set up GitHub Pages deployment workflow
+- [x] Create basic responsive layout shell with navigation
+
+## Step 2: Data Model & Local Storage ✅
+- [x] Define TypeScript types for bottle schema and history entries
+- [x] Implement localStorage/IndexedDB wrapper for offline data persistence
+- [x] Create utility functions to calculate current quantity from history
+- [x] Implement duplicate detection logic (type + vintage + name matching)
+
+## Step 3: Dashboard View ✅
+- [x] Create dashboard layout with inventory statistics (total bottles, breakdown by type)
+- [x] Display recent activity feed with last 10 history entries and top 3 regions
+- [x] Add persistent sync status indicator (placeholder "Offline" badge)
+- [x] Ensure mobile-optimized responsive design with empty state and CTA
+
+## Step 4: Add Bottle Functionality ✅
+- [x] Create add bottle form with all required fields (name, vintage, type, etc.)
+- [x] Implement duplicate detection flow (update existing vs create new)
+- [x] Add history entry creation for "added" action with price/currency support
+- [x] Form validation and error handling
+
+## Step 5: Search & Filter ✅
+- [x] Create search/filter UI with mobile-optimized controls
+- [x] Implement filtering by type, country, region, vintage, and rating
+- [x] Display filtered results in responsive grid/list
+- [x] Add clear filters and search state management
+
+## Step 6: GitHub Integration - Settings & Authentication
+- [ ] Create settings view for GitHub configuration
+- [ ] Implement secure storage of GitHub repo URL and PAT in localStorage
+- [ ] Create GitHub API client with PAT authentication
+- [ ] Add connection testing and validation
+
+## Step 7: GitHub Sync - Push & Pull
+- [ ] Implement push: Write local bottles to GitHub as JSON files (wines/{type}/wine-{uuid}.json)
+- [ ] Implement pull: Read bottles from GitHub into local storage
+- [ ] Create file organization structure by wine type
+- [ ] Update sync status indicator to show active syncing state
+
+## Step 8: Offline Capability & Sync Queue
+- [ ] Implement offline detection and status display
+- [ ] Queue local changes when offline (add, update, consume actions)
+- [ ] Auto-sync queued changes when connection restored
+- [ ] Update sync status to reflect in-sync/error states
+
+## Step 9: Conflict Resolution
+- [ ] Detect sync conflicts (outdated local state vs remote changes)
+- [ ] Create conflict resolution UI with two options
+- [ ] Implement Option 1: Create GitHub pull request for manual resolution
+- [ ] Implement Option 2: Overwrite local data with GitHub state
+
+## Step 10: Polish & Optimization
+- [ ] Final bundle size optimization and code splitting
+- [ ] Performance optimization for mobile devices
+- [ ] Comprehensive error handling and user feedback messages
+- [ ] End-to-end testing and bug fixes
