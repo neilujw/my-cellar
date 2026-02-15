@@ -32,11 +32,11 @@ Updated at 2026-02-14
 - [x] Display filtered results in responsive grid/list
 - [x] Add clear filters and search state management
 
-## Step 6: GitHub Integration - Settings & Authentication
-- [ ] Create settings view for GitHub configuration
-- [ ] Implement secure storage of GitHub repo URL and PAT in localStorage
-- [ ] Create GitHub API client with PAT authentication
-- [ ] Add connection testing and validation
+## Step 6: GitHub Integration - Settings & Authentication ✅
+- [x] Create settings view for GitHub configuration
+- [x] Implement secure storage of GitHub repo URL and PAT in localStorage
+- [x] Create GitHub API client with PAT authentication
+- [x] Add connection testing and validation
 
 ## Step 7: GitHub Sync - Push & Pull
 - [ ] Implement push: Write local bottles to GitHub as JSON files (wines/{type}/wine-{uuid}.json)

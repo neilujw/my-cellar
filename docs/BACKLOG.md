@@ -3,13 +3,13 @@
 # Monitor Tailwind CSS impact on bundle size
 
 ## Context
-During project setup planning, Tailwind CSS was chosen for styling. The project has a 15-20kb gzipped bundle size target for the final app.
+During project setup planning, Tailwind CSS was chosen for styling. The project has a 50kb gzipped bundle size target for the final app.
 
 ## Dependency
 Depends on Step 10 (Polish & Optimization) where final bundle size optimization is performed.
 
 ## Details
-Tailwind CSS with proper purging typically produces small output, but the impact on the overall bundle size should be monitored throughout development. If the 15-20kb target becomes unachievable, consider switching to plain scoped CSS or a lighter alternative. Measure gzipped size after each major step.
+Tailwind CSS with proper purging typically produces small output, but the impact on the overall bundle size should be monitored throughout development. If the 50kb target becomes unachievable, consider switching to plain scoped CSS or a lighter alternative. Measure gzipped size after each major step.
 
 # Consider adding Playwright for E2E testing
 
@@ -44,13 +44,6 @@ Depends on Step 5 (Search & Filter) which provides the bottle listing where cons
 ## Details
 Users need a way to mark bottles as consumed or removed. This should be accessible from a bottle detail view or directly from search results. The action should create a history entry with the appropriate action type (consumed/removed), quantity, and optional notes. Consider a swipe gesture or action menu on mobile for quick access.
 
-# Discuss bundle size strategy
+# ~~Discuss bundle size strategy~~ (Resolved)
 
-## Context
-After completing Step 2 (Data Model & Local Storage), the production build is ~15.46 kB gzipped JS + ~2.50 kB gzipped CSS (~18 kB total). The project targets 15-20 kB for the final optimized app.
-
-## Dependency
-Should be discussed before significant new dependencies are added, ideally before Step 6 (GitHub Integration) which will add the GitHub API client.
-
-## Details
-The current bundle is already near the 15-20 kB target with only the foundation and data layer in place. Adding features like GitHub API integration, offline sync, and conflict resolution will increase bundle size. Need to discuss: whether the 15-20 kB target is still realistic, whether to raise the target, or whether to adopt code-splitting strategies to keep the initial load small.
+Resolved on 2026-02-15: Bundle size target raised from 15-20kb to 50kb to accommodate Octokit and future sync features. See `docs/decisions/20260215-bundle-size-target.md`.

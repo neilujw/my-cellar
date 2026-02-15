@@ -1,6 +1,6 @@
 import 'fake-indexeddb/auto';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { render, screen, cleanup } from '@testing-library/svelte';
+import { render, screen, cleanup, waitFor } from '@testing-library/svelte';
 import { userEvent } from '@testing-library/user-event';
 import App from './App.svelte';
 import { resetDbConnection, clearAll } from './lib/storage';
@@ -9,6 +9,7 @@ describe('App', () => {
   beforeEach(async () => {
     window.location.hash = '';
     window.dispatchEvent(new HashChangeEvent('hashchange'));
+    localStorage.clear();
     resetDbConnection();
     await clearAll();
   });
@@ -24,7 +25,7 @@ describe('App', () => {
       expect(screen.getByText('My Cellar')).toBeInTheDocument();
     });
 
-    it('should render the sync status placeholder', () => {
+    it('should render the sync status indicator', () => {
       render(App);
 
       expect(screen.getByTestId('sync-status')).toBeInTheDocument();
@@ -79,6 +80,56 @@ describe('App', () => {
       window.dispatchEvent(new HashChangeEvent('hashchange'));
 
       expect(screen.getByRole('heading', { name: 'Settings' })).toBeInTheDocument();
+    });
+  });
+
+  describe('sync status', () => {
+    it('should show "Not configured" when no settings exist', () => {
+      render(App);
+
+      expect(screen.getByTestId('sync-status')).toHaveTextContent('Not configured');
+    });
+
+    it('should show "Connected" when settings are saved', () => {
+      localStorage.setItem(
+        'my-cellar-github-settings',
+        JSON.stringify({ repo: 'owner/repo', pat: 'ghp_test' }),
+      );
+
+      render(App);
+
+      expect(screen.getByTestId('sync-status')).toHaveTextContent('Connected');
+    });
+
+    it('should update status when settings-changed event is dispatched', async () => {
+      render(App);
+      expect(screen.getByTestId('sync-status')).toHaveTextContent('Not configured');
+
+      localStorage.setItem(
+        'my-cellar-github-settings',
+        JSON.stringify({ repo: 'owner/repo', pat: 'ghp_test' }),
+      );
+      window.dispatchEvent(new CustomEvent('settings-changed'));
+
+      await waitFor(() => {
+        expect(screen.getByTestId('sync-status')).toHaveTextContent('Connected');
+      });
+    });
+
+    it('should revert to "Not configured" after disconnect', async () => {
+      localStorage.setItem(
+        'my-cellar-github-settings',
+        JSON.stringify({ repo: 'owner/repo', pat: 'ghp_test' }),
+      );
+      render(App);
+      expect(screen.getByTestId('sync-status')).toHaveTextContent('Connected');
+
+      localStorage.removeItem('my-cellar-github-settings');
+      window.dispatchEvent(new CustomEvent('settings-changed'));
+
+      await waitFor(() => {
+        expect(screen.getByTestId('sync-status')).toHaveTextContent('Not configured');
+      });
     });
   });
 });

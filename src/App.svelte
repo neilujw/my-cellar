@@ -5,6 +5,8 @@
    */
   import { getCurrentRoute, navigate } from './lib/router.svelte.ts';
   import type { Route } from './lib/router.svelte.ts';
+  import type { SyncStatus } from './lib/types';
+  import { loadSettings } from './lib/github-settings';
   import Dashboard from './views/Dashboard.svelte';
   import AddBottle from './views/AddBottle.svelte';
   import Search from './views/Search.svelte';
@@ -23,6 +25,34 @@
     { route: '/settings', label: 'Settings', icon: '⚙️' },
   ];
 
+  /** Derives sync status from stored GitHub settings. */
+  function getSyncStatus(): SyncStatus {
+    return loadSettings() ? 'connected' : 'not-configured';
+  }
+
+  let syncStatus = $state<SyncStatus>(getSyncStatus());
+
+  // Listen for settings changes from the Settings view
+  $effect(() => {
+    function handleSettingsChanged(): void {
+      syncStatus = getSyncStatus();
+    }
+    window.addEventListener('settings-changed', handleSettingsChanged);
+    return () => window.removeEventListener('settings-changed', handleSettingsChanged);
+  });
+
+  const syncStatusLabels: Record<SyncStatus, string> = {
+    'not-configured': 'Not configured',
+    connected: 'Connected',
+    offline: 'Offline',
+  };
+
+  const syncStatusColors: Record<SyncStatus, string> = {
+    'not-configured': 'text-gray-400',
+    connected: 'text-green-600',
+    offline: 'text-amber-500',
+  };
+
   function handleTabClick(route: Route): void {
     navigate(route);
   }
@@ -32,7 +62,7 @@
   <!-- Header -->
   <header class="flex items-center justify-between border-b border-gray-200 bg-white px-4 py-3">
     <h1 class="text-lg font-bold">My Cellar</h1>
-    <span class="text-sm text-gray-400" data-testid="sync-status">Offline</span>
+    <span class="text-sm {syncStatusColors[syncStatus]}" data-testid="sync-status">{syncStatusLabels[syncStatus]}</span>
   </header>
 
   <!-- Content area -->

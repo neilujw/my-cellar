@@ -17,7 +17,7 @@ A personal wine cellar management application that prioritizes data ownership an
 
 - **Privacy**: Wine collection data remains private (private GitHub repo). Application code can be public, but personal data is never shared or accessible to third parties.
 
-- **Mobile-First**: Primary access via mobile phone browser. UI must be responsive and optimized for mobile performance with minimal bundle size (~15-20kb).
+- **Mobile-First**: Primary access via mobile phone browser. UI must be responsive and optimized for mobile performance with minimal bundle size (~50kb).
 
 - **Low Maintenance**: No server infrastructure to maintain, no databases to manage, no ongoing hosting costs. Simple static site deployment.
 

@@ -34,6 +34,21 @@ export interface HistoryEntry {
   readonly notes?: string;
 }
 
+/** GitHub repository and PAT credentials for data sync. */
+export interface GitHubSettings {
+  readonly repo: string;
+  readonly pat: string;
+}
+
+/** Result of testing a GitHub connection. */
+export type ConnectionStatus =
+  | { readonly status: 'not-configured' }
+  | { readonly status: 'connected' }
+  | { readonly status: 'error'; readonly message: string };
+
+/** Current sync state displayed in the header. */
+export type SyncStatus = 'not-configured' | 'connected' | 'offline';
+
 /**
  * A wine bottle in the cellar.
  *

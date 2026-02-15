@@ -1,5 +1,8 @@
 # Changelog
 
+## 2026-02-15
+Implemented GitHub Integration settings and authentication (Step 6). Added a Settings view where users configure their private GitHub repository (owner/repo format) and Personal Access Token, test the connection (verifying PAT validity and read/write access via Octokit), save credentials to localStorage, and disconnect. The header sync status indicator now dynamically shows "Not configured" or "Connected" based on stored settings. Added GitHub API client module, settings storage utilities, and form validation with comprehensive tests. Raised bundle size target from ~15-20kb to ~50kb to accommodate Octokit.
+
 ## 2026-02-14
 Initialized the My Cellar project with Svelte 5, Vite, Tailwind CSS v4, and Vitest. Set up a mobile-first layout shell with bottom tab bar navigation (Dashboard, Add, Search, Settings), hash-based routing, and placeholder views. Added GitHub Actions workflow for automated deployment to GitHub Pages.
 
