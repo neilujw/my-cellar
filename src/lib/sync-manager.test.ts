@@ -22,6 +22,8 @@ import { SYNC_MAX_RETRIES, SYNC_BASE_DELAY_MS, SYNC_MAX_DELAY_MS } from './sync-
 
 vi.mock('./github-settings', () => ({
   loadSettings: vi.fn(),
+  getLastSyncedCommitSha: vi.fn(),
+  setLastSyncedCommitSha: vi.fn(),
 }));
 
 vi.mock('./github-client', () => ({
@@ -32,10 +34,12 @@ vi.mock('./github-sync', () => ({
   pushToGitHub: vi.fn(),
 }));
 
-import { loadSettings } from './github-settings';
+import { loadSettings, getLastSyncedCommitSha, setLastSyncedCommitSha } from './github-settings';
 import { pushToGitHub } from './github-sync';
 
 const mockedLoadSettings = vi.mocked(loadSettings);
+const mockedGetLastSyncedSha = vi.mocked(getLastSyncedCommitSha);
+const mockedSetLastSyncedSha = vi.mocked(setLastSyncedCommitSha);
 const mockedPush = vi.mocked(pushToGitHub);
 
 /** Captured retry callbacks and their delays. */
@@ -277,6 +281,77 @@ describe('sync-manager', () => {
 
       cancelRetries();
       expect(getRetryAttempt()).toBe(0);
+    });
+  });
+
+  describe('conflict handling', () => {
+    it('should dispatch conflict status and not retry when attemptSync detects conflict', async () => {
+      mockedPush.mockResolvedValue({ status: 'conflict', message: 'Remote has changed' });
+      const handler = vi.fn();
+      window.addEventListener('sync-status-changed', handler);
+
+      await attemptSync('Added bottle');
+
+      const lastCall = handler.mock.calls[handler.mock.calls.length - 1][0].detail;
+      expect(lastCall.status).toBe('conflict');
+      expect(getRetryAttempt()).toBe(0);
+      expect(scheduledCallbacks).toHaveLength(0);
+      expect(await getSyncQueueCount()).toBe(0);
+      window.removeEventListener('sync-status-changed', handler);
+    });
+
+    it('should dispatch conflict status and stop processing when processQueue detects conflict', async () => {
+      await addToSyncQueue({ timestamp: '2026-01-01T00:00:00Z', action: 'test' });
+      mockedPush.mockResolvedValue({ status: 'conflict', message: 'Remote has changed' });
+      const handler = vi.fn();
+      window.addEventListener('sync-status-changed', handler);
+
+      await processQueue();
+
+      const lastCall = handler.mock.calls[handler.mock.calls.length - 1][0].detail;
+      expect(lastCall.status).toBe('conflict');
+      expect(getRetryAttempt()).toBe(0);
+      expect(scheduledCallbacks).toHaveLength(0);
+      window.removeEventListener('sync-status-changed', handler);
+    });
+
+    it('should store commit SHA after successful push in attemptSync', async () => {
+      mockedPush.mockResolvedValue({
+        status: 'success',
+        message: 'Done',
+        commitSha: 'new-sha-123',
+      });
+
+      await attemptSync('Added bottle');
+
+      expect(mockedSetLastSyncedSha).toHaveBeenCalledWith('new-sha-123');
+    });
+
+    it('should store commit SHA after successful push in processQueue', async () => {
+      await addToSyncQueue({ timestamp: '2026-01-01T00:00:00Z', action: 'test' });
+      mockedPush.mockResolvedValue({
+        status: 'success',
+        message: 'Done',
+        commitSha: 'queue-sha-456',
+      });
+
+      await processQueue();
+
+      expect(mockedSetLastSyncedSha).toHaveBeenCalledWith('queue-sha-456');
+    });
+
+    it('should pass last synced SHA to pushToGitHub', async () => {
+      mockedGetLastSyncedSha.mockReturnValue('stored-sha-789');
+      mockedPush.mockResolvedValue({ status: 'success', message: 'Done' });
+
+      await attemptSync('Added bottle');
+
+      expect(mockedPush).toHaveBeenCalledWith(
+        expect.anything(),
+        'owner/repo',
+        expect.anything(),
+        'stored-sha-789',
+      );
     });
   });
 });

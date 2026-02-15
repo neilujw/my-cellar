@@ -1,5 +1,12 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { saveSettings, loadSettings, clearSettings } from './github-settings';
+import {
+  saveSettings,
+  loadSettings,
+  clearSettings,
+  getLastSyncedCommitSha,
+  setLastSyncedCommitSha,
+  clearLastSyncedCommitSha,
+} from './github-settings';
 import type { GitHubSettings } from './types';
 
 describe('github-settings', () => {
@@ -81,6 +88,46 @@ describe('github-settings', () => {
 
     it('should not throw when no settings exist', () => {
       expect(() => clearSettings()).not.toThrow();
+    });
+
+    it('should also clear last synced commit SHA', () => {
+      setLastSyncedCommitSha('abc123');
+
+      clearSettings();
+
+      expect(getLastSyncedCommitSha()).toBeNull();
+    });
+  });
+
+  describe('last synced commit SHA', () => {
+    it('should return null when no SHA is stored', () => {
+      expect(getLastSyncedCommitSha()).toBeNull();
+    });
+
+    it('should store and retrieve a commit SHA', () => {
+      setLastSyncedCommitSha('abc123def456');
+
+      expect(getLastSyncedCommitSha()).toBe('abc123def456');
+    });
+
+    it('should overwrite a previously stored SHA', () => {
+      setLastSyncedCommitSha('first-sha');
+
+      setLastSyncedCommitSha('second-sha');
+
+      expect(getLastSyncedCommitSha()).toBe('second-sha');
+    });
+
+    it('should clear a stored SHA', () => {
+      setLastSyncedCommitSha('abc123');
+
+      clearLastSyncedCommitSha();
+
+      expect(getLastSyncedCommitSha()).toBeNull();
+    });
+
+    it('should not throw when clearing a non-existent SHA', () => {
+      expect(() => clearLastSyncedCommitSha()).not.toThrow();
     });
   });
 });

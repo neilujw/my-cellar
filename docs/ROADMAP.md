@@ -50,11 +50,11 @@ Updated at 2026-02-15
 - [x] Auto-sync queued changes when connection restored
 - [x] Update sync status to reflect in-sync/error states
 
-## Step 9: Conflict Resolution
-- [ ] Detect sync conflicts (outdated local state vs remote changes)
-- [ ] Create conflict resolution UI with two options
-- [ ] Implement Option 1: Create GitHub pull request for manual resolution
-- [ ] Implement Option 2: Overwrite local data with GitHub state
+## Step 9: Conflict Resolution ✅
+- [x] Detect sync conflicts (outdated local state vs remote changes)
+- [x] Create conflict resolution UI with two options
+- [x] Implement Option 1: Create GitHub pull request for manual resolution
+- [x] Implement Option 2: Overwrite local data with GitHub state
 
 ## Step 10: Polish & Optimization
 - [ ] Final bundle size optimization and code splitting

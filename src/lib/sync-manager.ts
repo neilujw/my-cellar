@@ -1,5 +1,5 @@
 import { createGitHubClient } from './github-client';
-import { loadSettings } from './github-settings';
+import { loadSettings, getLastSyncedCommitSha, setLastSyncedCommitSha } from './github-settings';
 import { pushToGitHub } from './github-sync';
 import {
   getAllBottles,
@@ -35,6 +35,7 @@ function dispatchSyncStatus(status: SyncStatus, pendingCount: number): void {
 /**
  * Attempts to push local state to GitHub.
  * On failure, adds the action to the sync queue and schedules a retry.
+ * On conflict, dispatches conflict status and stops (no retry).
  */
 export async function attemptSync(actionDescription: string): Promise<void> {
   const settings = loadSettings();
@@ -44,12 +45,18 @@ export async function attemptSync(actionDescription: string): Promise<void> {
 
   const client = createGitHubClient(settings.pat);
   const bottles = await getAllBottles();
-  const result = await pushToGitHub(client, settings.repo, bottles);
+  const lastSyncedSha = getLastSyncedCommitSha();
+  const result = await pushToGitHub(client, settings.repo, bottles, lastSyncedSha);
 
   if (result.status === 'success') {
     retryAttempt = 0;
     await clearSyncQueue();
+    if (result.commitSha) {
+      setLastSyncedCommitSha(result.commitSha);
+    }
     dispatchSyncStatus('connected', 0);
+  } else if (result.status === 'conflict') {
+    dispatchSyncStatus('conflict', 0);
   } else {
     await addToSyncQueue({
       timestamp: new Date().toISOString(),
@@ -86,6 +93,7 @@ async function handleMaxRetriesExhausted(): Promise<void> {
 /**
  * Processes queued sync items by attempting a push.
  * Called on app startup and after retry timer fires.
+ * On conflict, dispatches conflict status and stops processing.
  */
 export async function processQueue(): Promise<void> {
   const settings = loadSettings();
@@ -99,12 +107,18 @@ export async function processQueue(): Promise<void> {
 
   const client = createGitHubClient(settings.pat);
   const bottles = await getAllBottles();
-  const result = await pushToGitHub(client, settings.repo, bottles);
+  const lastSyncedSha = getLastSyncedCommitSha();
+  const result = await pushToGitHub(client, settings.repo, bottles, lastSyncedSha);
 
   if (result.status === 'success') {
     retryAttempt = 0;
     await clearSyncQueue();
+    if (result.commitSha) {
+      setLastSyncedCommitSha(result.commitSha);
+    }
     dispatchSyncStatus('connected', 0);
+  } else if (result.status === 'conflict') {
+    dispatchSyncStatus('conflict', 0);
   } else {
     dispatchSyncStatus('offline', pendingCount);
     scheduleRetry();

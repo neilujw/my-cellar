@@ -1,6 +1,9 @@
 # Changelog
 
 ## 2026-02-15
+Implemented Conflict Resolution (Step 9). When pushing local changes, the app detects if the remote GitHub repository has diverged by comparing the stored last-synced commit SHA against the remote HEAD. On conflict, a modal presents two resolution options: "Create Pull Request" (pushes local bottles to a timestamped `conflict/YYYY-MM-DD-HHmmss` branch and opens a PR) or "Use Remote Data" (overwrites local data with the remote state, clearing the sync queue). A new orange "Conflict" sync status indicator appears in the header, and the sync manager stops retrying on conflict detection.
+
+## 2026-02-15
 Implemented Offline Capability & Sync Queue (Step 8). When a GitHub sync fails due to network issues, local changes are preserved in a persistent IndexedDB sync queue and automatically retried with exponential backoff (up to 10 retries, capped at 60s delay). The header sync status indicator now shows five distinct states (not-configured, connected, offline, syncing, error) with pending change count (e.g., "Offline (3 pending)"). On app startup, queued sync items are automatically processed if GitHub is configured. Manual push/pull from Settings resets retry state and clears the queue on success.
 
 ## 2026-02-15

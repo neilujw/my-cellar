@@ -5,6 +5,8 @@ import SyncSection from './SyncSection.svelte';
 
 vi.mock('../lib/github-settings', () => ({
   loadSettings: vi.fn(),
+  getLastSyncedCommitSha: vi.fn().mockReturnValue(null),
+  setLastSyncedCommitSha: vi.fn(),
 }));
 
 vi.mock('../lib/github-client', () => ({
@@ -27,7 +29,7 @@ vi.mock('../lib/sync-manager', () => ({
   cancelRetries: vi.fn(),
 }));
 
-import { loadSettings } from '../lib/github-settings';
+import { loadSettings, setLastSyncedCommitSha } from '../lib/github-settings';
 import { pushToGitHub, pullFromGitHub } from '../lib/github-sync';
 import { cancelRetries } from '../lib/sync-manager';
 import { clearSyncQueue } from '../lib/storage';
@@ -37,6 +39,7 @@ const mockedPush = vi.mocked(pushToGitHub);
 const mockedPull = vi.mocked(pullFromGitHub);
 const mockedCancelRetries = vi.mocked(cancelRetries);
 const mockedClearSyncQueue = vi.mocked(clearSyncQueue);
+const mockedSetLastSyncedSha = vi.mocked(setLastSyncedCommitSha);
 
 describe('SyncSection', () => {
   beforeEach(() => {
@@ -191,6 +194,54 @@ describe('SyncSection', () => {
 
       resolvePromise!({ status: 'success', message: 'Done' });
       await pushPromise;
+    });
+  });
+
+  describe('commit SHA persistence', () => {
+    it('should store commit SHA after successful push', async () => {
+      mockedPush.mockResolvedValue({
+        status: 'success',
+        message: 'Pushed 1 change',
+        commitSha: 'push-sha-123',
+      });
+      render(SyncSection);
+      const user = userEvent.setup();
+
+      await user.click(screen.getByTestId('push-button'));
+
+      expect(mockedSetLastSyncedSha).toHaveBeenCalledWith('push-sha-123');
+    });
+
+    it('should store commit SHA after successful pull', async () => {
+      mockedPull.mockResolvedValue({
+        status: 'success',
+        message: 'Pulled 2 bottles',
+        bottles: [],
+        commitSha: 'pull-sha-456',
+      });
+      render(SyncSection);
+      const user = userEvent.setup();
+
+      await user.click(screen.getByTestId('pull-button'));
+
+      expect(mockedSetLastSyncedSha).toHaveBeenCalledWith('pull-sha-456');
+    });
+
+    it('should dispatch conflict status when push detects conflict', async () => {
+      mockedPush.mockResolvedValue({
+        status: 'conflict',
+        message: 'Remote has changed',
+      });
+      const handler = vi.fn();
+      window.addEventListener('sync-status-changed', handler);
+      render(SyncSection);
+      const user = userEvent.setup();
+
+      await user.click(screen.getByTestId('push-button'));
+
+      const lastCall = handler.mock.calls[handler.mock.calls.length - 1][0].detail;
+      expect(lastCall.status).toBe('conflict');
+      window.removeEventListener('sync-status-changed', handler);
     });
   });
 });

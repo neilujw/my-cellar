@@ -7,11 +7,13 @@
   import type { Route } from './lib/router.svelte.ts';
   import type { SyncStatus } from './lib/types';
   import { loadSettings } from './lib/github-settings';
+  import { createGitHubClient } from './lib/github-client';
   import { processQueue } from './lib/sync-manager';
   import Dashboard from './views/Dashboard.svelte';
   import AddBottle from './views/AddBottle.svelte';
   import Search from './views/Search.svelte';
   import Settings from './views/Settings.svelte';
+  import ConflictModal from './components/ConflictModal.svelte';
 
   interface Tab {
     readonly route: Route;
@@ -34,27 +36,20 @@
   let syncStatus = $state<SyncStatus>(getSyncStatus());
   let pendingCount = $state(0);
 
-  // Listen for settings changes from the Settings view
-  $effect(() => {
-    function handleSettingsChanged(): void {
-      syncStatus = getSyncStatus();
-      pendingCount = 0;
-    }
-    window.addEventListener('settings-changed', handleSettingsChanged);
-    return () => window.removeEventListener('settings-changed', handleSettingsChanged);
-  });
-
   /** Detail payload for sync-status-changed events. */
   interface SyncStatusDetail {
     readonly status: SyncStatus;
     readonly pendingCount?: number;
   }
 
-  // Listen for sync-status-changed events from sync operations
   $effect(() => {
+    function handleSettingsChanged(): void {
+      syncStatus = getSyncStatus();
+      pendingCount = 0;
+    }
     function handleSyncStatusChanged(event: Event): void {
       const detail = (event as CustomEvent<SyncStatusDetail>).detail;
-      if (detail.status === 'syncing' || detail.status === 'offline' || detail.status === 'error') {
+      if (detail.status === 'syncing' || detail.status === 'offline' || detail.status === 'error' || detail.status === 'conflict') {
         syncStatus = detail.status;
       } else if (detail.status === 'connected') {
         syncStatus = 'connected';
@@ -63,36 +58,36 @@
       }
       pendingCount = detail.pendingCount ?? 0;
     }
+    function handleConflictResolved(): void {
+      syncStatus = 'connected';
+    }
+    window.addEventListener('settings-changed', handleSettingsChanged);
     window.addEventListener('sync-status-changed', handleSyncStatusChanged);
-    return () => window.removeEventListener('sync-status-changed', handleSyncStatusChanged);
+    window.addEventListener('conflict-resolved', handleConflictResolved);
+    return () => {
+      window.removeEventListener('settings-changed', handleSettingsChanged);
+      window.removeEventListener('sync-status-changed', handleSyncStatusChanged);
+      window.removeEventListener('conflict-resolved', handleConflictResolved);
+    };
   });
 
-  const syncStatusLabels: Record<SyncStatus, string> = {
-    'not-configured': 'Not configured',
-    connected: 'Connected',
-    offline: 'Offline',
-    syncing: 'Syncing...',
-    error: 'Error',
+  const syncStatusConfig: Record<SyncStatus, { label: string; color: string }> = {
+    'not-configured': { label: 'Not configured', color: 'text-gray-400' },
+    connected: { label: 'Connected', color: 'text-green-600' },
+    offline: { label: 'Offline', color: 'text-amber-500' },
+    syncing: { label: 'Syncing...', color: 'text-blue-500' },
+    error: { label: 'Error', color: 'text-red-600' },
+    conflict: { label: 'Conflict', color: 'text-orange-500' },
   };
 
-  const syncStatusColors: Record<SyncStatus, string> = {
-    'not-configured': 'text-gray-400',
-    connected: 'text-green-600',
-    offline: 'text-amber-500',
-    syncing: 'text-blue-500',
-    error: 'text-red-600',
-  };
-
-  /** Formatted sync status label including pending count when relevant. */
   let syncStatusLabel = $derived(() => {
-    const base = syncStatusLabels[syncStatus];
+    const base = syncStatusConfig[syncStatus].label;
     if ((syncStatus === 'offline' || syncStatus === 'error') && pendingCount > 0) {
       return `${base} (${pendingCount} pending)`;
     }
     return base;
   });
 
-  // On mount, process any queued sync items if GitHub is configured
   $effect(() => {
     if (loadSettings()) {
       processQueue();
@@ -105,13 +100,11 @@
 </script>
 
 <div class="flex h-full flex-col">
-  <!-- Header -->
   <header class="flex items-center justify-between border-b border-gray-200 bg-white px-4 py-3">
     <h1 class="text-lg font-bold">My Cellar</h1>
-    <span class="text-sm {syncStatusColors[syncStatus]}" data-testid="sync-status">{syncStatusLabel()}</span>
+    <span class="text-sm {syncStatusConfig[syncStatus].color}" data-testid="sync-status">{syncStatusLabel()}</span>
   </header>
 
-  <!-- Content area -->
   <main class="flex-1 overflow-y-auto">
     {#if getCurrentRoute() === '/'}
       <Dashboard />
@@ -124,7 +117,13 @@
     {/if}
   </main>
 
-  <!-- Bottom tab bar -->
+  {#if syncStatus === 'conflict'}
+    {@const settings = loadSettings()}
+    {#if settings}
+      <ConflictModal client={createGitHubClient(settings.pat)} repo={settings.repo} />
+    {/if}
+  {/if}
+
   <nav class="flex border-t border-gray-200 bg-white" aria-label="Main navigation">
     {#each tabs as tab (tab.route)}
       <button

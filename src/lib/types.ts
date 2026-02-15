@@ -47,7 +47,7 @@ export type ConnectionStatus =
   | { readonly status: 'error'; readonly message: string };
 
 /** Current sync state displayed in the header. */
-export type SyncStatus = 'not-configured' | 'connected' | 'offline' | 'syncing' | 'error';
+export type SyncStatus = 'not-configured' | 'connected' | 'offline' | 'syncing' | 'error' | 'conflict';
 
 /** A queued sync operation waiting to be retried. */
 export interface SyncQueueEntry {
@@ -58,7 +58,8 @@ export interface SyncQueueEntry {
 
 /** Result of a sync operation (push or pull). */
 export type SyncResult =
-  | { readonly status: 'success'; readonly message: string }
+  | { readonly status: 'success'; readonly message: string; readonly commitSha?: string }
+  | { readonly status: 'conflict'; readonly message: string }
   | { readonly status: 'error'; readonly message: string };
 
 /**

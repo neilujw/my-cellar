@@ -30,4 +30,22 @@ export function loadSettings(): GitHubSettings | null {
 /** Removes stored GitHub settings from localStorage. */
 export function clearSettings(): void {
   localStorage.removeItem(STORAGE_KEY);
+  clearLastSyncedCommitSha();
+}
+
+const SHA_STORAGE_KEY = 'my-cellar-last-synced-sha';
+
+/** Retrieves the last synced commit SHA from localStorage. */
+export function getLastSyncedCommitSha(): string | null {
+  return localStorage.getItem(SHA_STORAGE_KEY);
+}
+
+/** Stores the last synced commit SHA in localStorage. */
+export function setLastSyncedCommitSha(sha: string): void {
+  localStorage.setItem(SHA_STORAGE_KEY, sha);
+}
+
+/** Removes the stored last synced commit SHA from localStorage. */
+export function clearLastSyncedCommitSha(): void {
+  localStorage.removeItem(SHA_STORAGE_KEY);
 }

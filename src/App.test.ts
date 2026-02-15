@@ -5,7 +5,22 @@ import { userEvent } from '@testing-library/user-event';
 
 vi.mock('./lib/sync-manager', () => ({
   processQueue: vi.fn(),
+  cancelRetries: vi.fn(),
 }));
+
+vi.mock('./lib/github-client', () => ({
+  createGitHubClient: vi.fn(() => ({})),
+}));
+
+vi.mock('./lib/github-sync', () => ({
+  createConflictPR: vi.fn(),
+  resolveConflictWithRemote: vi.fn(),
+}));
+
+vi.mock('./lib/github-settings', async () => {
+  const actual = await vi.importActual('./lib/github-settings');
+  return { ...actual, setLastSyncedCommitSha: vi.fn() };
+});
 
 import App from './App.svelte';
 import { resetDbConnection, clearAll, clearSyncQueue } from './lib/storage';
@@ -254,6 +269,88 @@ describe('App', () => {
 
       await waitFor(() => {
         expect(screen.getByTestId('sync-status')).toHaveTextContent('Error');
+      });
+    });
+
+    it('should show "Conflict" with orange styling when conflict is detected', async () => {
+      render(App);
+
+      window.dispatchEvent(
+        new CustomEvent('sync-status-changed', {
+          detail: { status: 'conflict', pendingCount: 0 },
+        }),
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId('sync-status')).toHaveTextContent('Conflict');
+      });
+    });
+  });
+
+  describe('conflict modal', () => {
+    it('should show conflict modal when sync status is conflict', async () => {
+      localStorage.setItem(
+        'my-cellar-github-settings',
+        JSON.stringify({ repo: 'owner/repo', pat: 'ghp_test' }),
+      );
+      render(App);
+
+      window.dispatchEvent(
+        new CustomEvent('sync-status-changed', {
+          detail: { status: 'conflict', pendingCount: 0 },
+        }),
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId('conflict-modal')).toBeInTheDocument();
+      });
+    });
+
+    it('should hide conflict modal when conflict-resolved event is dispatched', async () => {
+      localStorage.setItem(
+        'my-cellar-github-settings',
+        JSON.stringify({ repo: 'owner/repo', pat: 'ghp_test' }),
+      );
+      render(App);
+
+      window.dispatchEvent(
+        new CustomEvent('sync-status-changed', {
+          detail: { status: 'conflict', pendingCount: 0 },
+        }),
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId('conflict-modal')).toBeInTheDocument();
+      });
+
+      window.dispatchEvent(new CustomEvent('conflict-resolved'));
+
+      await waitFor(() => {
+        expect(screen.queryByTestId('conflict-modal')).not.toBeInTheDocument();
+      });
+    });
+
+    it('should return to Connected status after conflict resolution', async () => {
+      localStorage.setItem(
+        'my-cellar-github-settings',
+        JSON.stringify({ repo: 'owner/repo', pat: 'ghp_test' }),
+      );
+      render(App);
+
+      window.dispatchEvent(
+        new CustomEvent('sync-status-changed', {
+          detail: { status: 'conflict', pendingCount: 0 },
+        }),
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId('sync-status')).toHaveTextContent('Conflict');
+      });
+
+      window.dispatchEvent(new CustomEvent('conflict-resolved'));
+
+      await waitFor(() => {
+        expect(screen.getByTestId('sync-status')).toHaveTextContent('Connected');
       });
     });
   });

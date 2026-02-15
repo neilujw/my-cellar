@@ -5,7 +5,7 @@
    */
   import type { SyncResult, SyncStatus } from '../lib/types';
   import { createGitHubClient } from '../lib/github-client';
-  import { loadSettings } from '../lib/github-settings';
+  import { loadSettings, getLastSyncedCommitSha, setLastSyncedCommitSha } from '../lib/github-settings';
   import { pushToGitHub, pullFromGitHub } from '../lib/github-sync';
   import { getAllBottles, clearAll, addBottle, clearSyncQueue } from '../lib/storage';
   import { cancelRetries } from '../lib/sync-manager';
@@ -31,12 +31,18 @@
 
     const client = createGitHubClient(settings.pat);
     const bottles = await getAllBottles();
-    const pushResult = await pushToGitHub(client, settings.repo, bottles);
+    const lastSyncedSha = getLastSyncedCommitSha();
+    const pushResult = await pushToGitHub(client, settings.repo, bottles, lastSyncedSha);
 
     if (pushResult.status === 'success') {
+      if (pushResult.commitSha) {
+        setLastSyncedCommitSha(pushResult.commitSha);
+      }
       cancelRetries();
       await clearSyncQueue();
       dispatchSyncStatus('connected');
+    } else if (pushResult.status === 'conflict') {
+      dispatchSyncStatus('conflict');
     } else {
       dispatchSyncStatus('offline');
     }
@@ -61,6 +67,9 @@
       await clearAll();
       for (const bottle of pullResult.bottles) {
         await addBottle(bottle);
+      }
+      if (pullResult.commitSha) {
+        setLastSyncedCommitSha(pullResult.commitSha);
       }
       cancelRetries();
       await clearSyncQueue();
