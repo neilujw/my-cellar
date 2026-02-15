@@ -47,7 +47,12 @@ export type ConnectionStatus =
   | { readonly status: 'error'; readonly message: string };
 
 /** Current sync state displayed in the header. */
-export type SyncStatus = 'not-configured' | 'connected' | 'offline';
+export type SyncStatus = 'not-configured' | 'connected' | 'offline' | 'syncing';
+
+/** Result of a sync operation (push or pull). */
+export type SyncResult =
+  | { readonly status: 'success'; readonly message: string }
+  | { readonly status: 'error'; readonly message: string };
 
 /**
  * A wine bottle in the cellar.

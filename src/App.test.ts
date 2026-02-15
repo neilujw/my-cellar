@@ -131,5 +131,46 @@ describe('App', () => {
         expect(screen.getByTestId('sync-status')).toHaveTextContent('Not configured');
       });
     });
+
+    it('should show "Syncing..." when sync-status-changed event is dispatched with syncing', async () => {
+      localStorage.setItem(
+        'my-cellar-github-settings',
+        JSON.stringify({ repo: 'owner/repo', pat: 'ghp_test' }),
+      );
+      render(App);
+      expect(screen.getByTestId('sync-status')).toHaveTextContent('Connected');
+
+      window.dispatchEvent(
+        new CustomEvent('sync-status-changed', { detail: { status: 'syncing' } }),
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId('sync-status')).toHaveTextContent('Syncing...');
+      });
+    });
+
+    it('should revert to "Connected" when sync completes', async () => {
+      localStorage.setItem(
+        'my-cellar-github-settings',
+        JSON.stringify({ repo: 'owner/repo', pat: 'ghp_test' }),
+      );
+      render(App);
+
+      window.dispatchEvent(
+        new CustomEvent('sync-status-changed', { detail: { status: 'syncing' } }),
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId('sync-status')).toHaveTextContent('Syncing...');
+      });
+
+      window.dispatchEvent(
+        new CustomEvent('sync-status-changed', { detail: { status: 'done' } }),
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId('sync-status')).toHaveTextContent('Connected');
+      });
+    });
   });
 });

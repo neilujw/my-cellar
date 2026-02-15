@@ -38,11 +38,11 @@ Updated at 2026-02-14
 - [x] Create GitHub API client with PAT authentication
 - [x] Add connection testing and validation
 
-## Step 7: GitHub Sync - Push & Pull
-- [ ] Implement push: Write local bottles to GitHub as JSON files (wines/{type}/wine-{uuid}.json)
-- [ ] Implement pull: Read bottles from GitHub into local storage
-- [ ] Create file organization structure by wine type
-- [ ] Update sync status indicator to show active syncing state
+## Step 7: GitHub Sync - Push & Pull ✅
+- [x] Implement push: Write local bottles to GitHub as JSON files (wines/{type}/wine-{uuid}.json)
+- [x] Implement pull: Read bottles from GitHub into local storage
+- [x] Create file organization structure by wine type
+- [x] Update sync status indicator to show active syncing state
 
 ## Step 8: Offline Capability & Sync Queue
 - [ ] Implement offline detection and status display

@@ -7,6 +7,7 @@
   import { saveSettings, loadSettings, clearSettings } from '../lib/github-settings';
   import { validateRepo, validatePat } from '../lib/settings-utils';
   import { createGitHubClient, testConnection } from '../lib/github-client';
+  import SyncSection from './SyncSection.svelte';
 
   let repo = $state('');
   let pat = $state('');
@@ -141,6 +142,8 @@
           Disconnect
         </button>
       </div>
+
+      <SyncSection />
     {/if}
   </form>
 </div>

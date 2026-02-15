@@ -41,16 +41,32 @@
     return () => window.removeEventListener('settings-changed', handleSettingsChanged);
   });
 
+  // Listen for sync-status-changed events during push/pull operations
+  $effect(() => {
+    function handleSyncStatusChanged(event: Event): void {
+      const detail = (event as CustomEvent<{ status: string }>).detail;
+      if (detail.status === 'syncing') {
+        syncStatus = 'syncing';
+      } else {
+        syncStatus = getSyncStatus();
+      }
+    }
+    window.addEventListener('sync-status-changed', handleSyncStatusChanged);
+    return () => window.removeEventListener('sync-status-changed', handleSyncStatusChanged);
+  });
+
   const syncStatusLabels: Record<SyncStatus, string> = {
     'not-configured': 'Not configured',
     connected: 'Connected',
     offline: 'Offline',
+    syncing: 'Syncing...',
   };
 
   const syncStatusColors: Record<SyncStatus, string> = {
     'not-configured': 'text-gray-400',
     connected: 'text-green-600',
     offline: 'text-amber-500',
+    syncing: 'text-blue-500',
   };
 
   function handleTabClick(route: Route): void {

@@ -1,6 +1,9 @@
 # Changelog
 
 ## 2026-02-15
+Implemented manual GitHub Sync push and pull (Step 7). Push creates a single atomic Git commit with incremental changes (added, modified, deleted bottles) as `wines/{type}/wine-{uuid}.json` files with consistent key ordering and pretty-printed JSON. Pull fetches all wine files from GitHub and replaces local IndexedDB data. Added Push/Pull buttons to Settings view with loading states, success/error feedback, and a "Syncing..." header indicator during operations. Created bottle serialization utilities and GitHub sync module with comprehensive tests.
+
+## 2026-02-15
 Implemented GitHub Integration settings and authentication (Step 6). Added a Settings view where users configure their private GitHub repository (owner/repo format) and Personal Access Token, test the connection (verifying PAT validity and read/write access via Octokit), save credentials to localStorage, and disconnect. The header sync status indicator now dynamically shows "Not configured" or "Connected" based on stored settings. Added GitHub API client module, settings storage utilities, and form validation with comprehensive tests. Raised bundle size target from ~15-20kb to ~50kb to accommodate Octokit.
 
 ## 2026-02-14
