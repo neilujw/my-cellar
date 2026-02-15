@@ -3,9 +3,16 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, screen, cleanup } from '@testing-library/svelte';
 import { userEvent } from '@testing-library/user-event';
 
+vi.mock('../lib/sync-manager', () => ({
+  attemptSync: vi.fn(),
+}));
+
 import AddBottle from './AddBottle.svelte';
 import { HistoryAction, WineType, type Bottle } from '../lib/types';
 import * as storage from '../lib/storage';
+import { attemptSync } from '../lib/sync-manager';
+
+const mockedAttemptSync = vi.mocked(attemptSync);
 
 function makeBottle(overrides: Partial<Bottle> = {}): Bottle {
   return {
@@ -34,6 +41,7 @@ async function fillRequiredFields(user: ReturnType<typeof userEvent.setup>): Pro
 
 describe('AddBottle', () => {
   beforeEach(() => {
+    vi.clearAllMocks();
     storage.resetDbConnection();
   });
 
@@ -114,6 +122,38 @@ describe('AddBottle', () => {
       expect(bottle.vintage).toBe(2015);
       expect(bottle.type).toBe(WineType.Red);
       expect(window.location.hash).toBe('#/');
+    });
+  });
+
+  describe('sync trigger', () => {
+    it('should call attemptSync after adding a new bottle', async () => {
+      vi.spyOn(storage, 'getAllBottles').mockResolvedValue([]);
+      vi.spyOn(storage, 'addBottle').mockResolvedValue('new-id');
+      render(AddBottle);
+      const user = userEvent.setup();
+
+      await fillRequiredFields(user);
+      await user.click(screen.getByTestId('submit-button'));
+
+      expect(mockedAttemptSync).toHaveBeenCalledWith(
+        expect.stringContaining('Chateau Margaux'),
+      );
+    });
+
+    it('should call attemptSync after confirming duplicate merge', async () => {
+      const existing = makeBottle();
+      vi.spyOn(storage, 'getAllBottles').mockResolvedValue([existing]);
+      vi.spyOn(storage, 'updateBottle').mockResolvedValue();
+      render(AddBottle);
+      const user = userEvent.setup();
+
+      await fillRequiredFields(user);
+      await user.click(screen.getByTestId('submit-button'));
+      await user.click(screen.getByTestId('confirm-duplicate'));
+
+      expect(mockedAttemptSync).toHaveBeenCalledWith(
+        expect.stringContaining('Chateau Margaux'),
+      );
     });
   });
 

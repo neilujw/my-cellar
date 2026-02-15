@@ -7,6 +7,7 @@
   import { navigate } from '../lib/router.svelte.ts';
   import { addBottle, getAllBottles, updateBottle } from '../lib/storage';
   import { findDuplicate } from '../lib/bottle-utils';
+  import { attemptSync } from '../lib/sync-manager';
   import {
     createBottleFromForm,
     createEmptyFormData,
@@ -40,7 +41,9 @@
     const match = findDuplicate(bottles, form.type as WineType, Number(form.vintage), form.name);
     if (match) { duplicate = match; return; }
 
-    await addBottle(createBottleFromForm(form));
+    const bottle = createBottleFromForm(form);
+    await addBottle(bottle);
+    attemptSync(`Added bottle: ${form.name} ${form.vintage}`);
     navigate('/');
   }
 
@@ -48,6 +51,7 @@
     if (!duplicate) return;
     const entry = createHistoryEntryFromForm(form);
     await updateBottle({ ...duplicate, history: [...duplicate.history, entry] });
+    attemptSync(`Updated bottle: ${duplicate.name} ${duplicate.vintage}`);
     navigate('/');
   }
 </script>

@@ -1,6 +1,9 @@
 # Changelog
 
 ## 2026-02-15
+Implemented Offline Capability & Sync Queue (Step 8). When a GitHub sync fails due to network issues, local changes are preserved in a persistent IndexedDB sync queue and automatically retried with exponential backoff (up to 10 retries, capped at 60s delay). The header sync status indicator now shows five distinct states (not-configured, connected, offline, syncing, error) with pending change count (e.g., "Offline (3 pending)"). On app startup, queued sync items are automatically processed if GitHub is configured. Manual push/pull from Settings resets retry state and clears the queue on success.
+
+## 2026-02-15
 Implemented manual GitHub Sync push and pull (Step 7). Push creates a single atomic Git commit with incremental changes (added, modified, deleted bottles) as `wines/{type}/wine-{uuid}.json` files with consistent key ordering and pretty-printed JSON. Pull fetches all wine files from GitHub and replaces local IndexedDB data. Added Push/Pull buttons to Settings view with loading states, success/error feedback, and a "Syncing..." header indicator during operations. Created bottle serialization utilities and GitHub sync module with comprehensive tests.
 
 ## 2026-02-15

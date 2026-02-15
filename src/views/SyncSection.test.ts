@@ -20,14 +20,23 @@ vi.mock('../lib/storage', () => ({
   getAllBottles: vi.fn().mockResolvedValue([]),
   clearAll: vi.fn().mockResolvedValue(undefined),
   addBottle: vi.fn().mockResolvedValue('id'),
+  clearSyncQueue: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock('../lib/sync-manager', () => ({
+  cancelRetries: vi.fn(),
 }));
 
 import { loadSettings } from '../lib/github-settings';
 import { pushToGitHub, pullFromGitHub } from '../lib/github-sync';
+import { cancelRetries } from '../lib/sync-manager';
+import { clearSyncQueue } from '../lib/storage';
 
 const mockedLoadSettings = vi.mocked(loadSettings);
 const mockedPush = vi.mocked(pushToGitHub);
 const mockedPull = vi.mocked(pullFromGitHub);
+const mockedCancelRetries = vi.mocked(cancelRetries);
+const mockedClearSyncQueue = vi.mocked(clearSyncQueue);
 
 describe('SyncSection', () => {
   beforeEach(() => {
@@ -75,6 +84,17 @@ describe('SyncSection', () => {
       expect(screen.getByTestId('sync-error')).toHaveTextContent('Push failed: Network error');
     });
 
+    it('should clear sync queue and cancel retries on successful push', async () => {
+      mockedPush.mockResolvedValue({ status: 'success', message: 'Done' });
+      render(SyncSection);
+      const user = userEvent.setup();
+
+      await user.click(screen.getByTestId('push-button'));
+
+      expect(mockedCancelRetries).toHaveBeenCalled();
+      expect(mockedClearSyncQueue).toHaveBeenCalled();
+    });
+
     it('should dispatch sync-status-changed events during push', async () => {
       mockedPush.mockResolvedValue({ status: 'success', message: 'Done' });
       const handler = vi.fn();
@@ -86,7 +106,7 @@ describe('SyncSection', () => {
 
       expect(handler).toHaveBeenCalledTimes(2);
       expect(handler.mock.calls[0][0].detail.status).toBe('syncing');
-      expect(handler.mock.calls[1][0].detail.status).toBe('done');
+      expect(handler.mock.calls[1][0].detail.status).toBe('connected');
       window.removeEventListener('sync-status-changed', handler);
     });
   });
@@ -118,8 +138,19 @@ describe('SyncSection', () => {
       expect(screen.getByTestId('sync-error')).toHaveTextContent('Pull failed: API error');
     });
 
-    it('should dispatch sync-status-changed events during pull', async () => {
+    it('should clear sync queue and cancel retries on successful pull', async () => {
       mockedPull.mockResolvedValue({ status: 'success', message: 'Done', bottles: [] });
+      render(SyncSection);
+      const user = userEvent.setup();
+
+      await user.click(screen.getByTestId('pull-button'));
+
+      expect(mockedCancelRetries).toHaveBeenCalled();
+      expect(mockedClearSyncQueue).toHaveBeenCalled();
+    });
+
+    it('should dispatch offline status on failed pull', async () => {
+      mockedPull.mockResolvedValue({ status: 'error', message: 'Pull failed: API error' });
       const handler = vi.fn();
       window.addEventListener('sync-status-changed', handler);
       render(SyncSection);
@@ -127,9 +158,8 @@ describe('SyncSection', () => {
 
       await user.click(screen.getByTestId('pull-button'));
 
-      expect(handler).toHaveBeenCalledTimes(2);
-      expect(handler.mock.calls[0][0].detail.status).toBe('syncing');
-      expect(handler.mock.calls[1][0].detail.status).toBe('done');
+      const lastCall = handler.mock.calls[handler.mock.calls.length - 1][0].detail;
+      expect(lastCall.status).toBe('offline');
       window.removeEventListener('sync-status-changed', handler);
     });
   });

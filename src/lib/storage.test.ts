@@ -1,8 +1,20 @@
 import 'fake-indexeddb/auto';
 import { describe, it, expect, beforeEach } from 'vitest';
 
-import { addBottle, getBottle, getAllBottles, updateBottle, deleteBottle, clearAll, resetDbConnection } from './storage';
-import { HistoryAction, WineType, type Bottle } from './types';
+import {
+  addBottle,
+  getBottle,
+  getAllBottles,
+  updateBottle,
+  deleteBottle,
+  clearAll,
+  resetDbConnection,
+  addToSyncQueue,
+  getSyncQueue,
+  clearSyncQueue,
+  getSyncQueueCount,
+} from './storage';
+import { HistoryAction, WineType, type Bottle, type SyncQueueEntry } from './types';
 
 function makeBottle(overrides: Partial<Bottle> = {}): Bottle {
   return {
@@ -30,6 +42,7 @@ beforeEach(async () => {
   resetDbConnection();
   // Clear leftover data from previous tests
   await clearAll();
+  await clearSyncQueue();
 });
 
 describe('addBottle', () => {
@@ -116,5 +129,77 @@ describe('clearAll', () => {
 
     const result = await getAllBottles();
     expect(result).toEqual([]);
+  });
+});
+
+function makeQueueEntry(overrides: Partial<SyncQueueEntry> = {}): SyncQueueEntry {
+  return {
+    timestamp: '2026-02-15T10:00:00.000Z',
+    action: 'Added bottle: Chateau Margaux 2015',
+    ...overrides,
+  };
+}
+
+describe('addToSyncQueue', () => {
+  it('should add an entry and return an auto-incremented id', async () => {
+    const id = await addToSyncQueue(makeQueueEntry());
+
+    expect(id).toBeGreaterThan(0);
+  });
+
+  it('should assign sequential ids to multiple entries', async () => {
+    const id1 = await addToSyncQueue(makeQueueEntry());
+    const id2 = await addToSyncQueue(makeQueueEntry({ action: 'Consumed bottle' }));
+
+    expect(id2).toBeGreaterThan(id1);
+  });
+});
+
+describe('getSyncQueue', () => {
+  it('should return all pending queue entries', async () => {
+    await addToSyncQueue(makeQueueEntry({ action: 'Action 1' }));
+    await addToSyncQueue(makeQueueEntry({ action: 'Action 2' }));
+
+    const entries = await getSyncQueue();
+
+    expect(entries).toHaveLength(2);
+    expect(entries[0].action).toBe('Action 1');
+    expect(entries[1].action).toBe('Action 2');
+  });
+
+  it('should return an empty array when the queue is empty', async () => {
+    const entries = await getSyncQueue();
+
+    expect(entries).toEqual([]);
+  });
+});
+
+describe('clearSyncQueue', () => {
+  it('should remove all queue entries', async () => {
+    await addToSyncQueue(makeQueueEntry({ action: 'Action 1' }));
+    await addToSyncQueue(makeQueueEntry({ action: 'Action 2' }));
+
+    await clearSyncQueue();
+
+    const entries = await getSyncQueue();
+    expect(entries).toEqual([]);
+  });
+});
+
+describe('getSyncQueueCount', () => {
+  it('should return the number of pending entries', async () => {
+    await addToSyncQueue(makeQueueEntry({ action: 'Action 1' }));
+    await addToSyncQueue(makeQueueEntry({ action: 'Action 2' }));
+    await addToSyncQueue(makeQueueEntry({ action: 'Action 3' }));
+
+    const count = await getSyncQueueCount();
+
+    expect(count).toBe(3);
+  });
+
+  it('should return zero when the queue is empty', async () => {
+    const count = await getSyncQueueCount();
+
+    expect(count).toBe(0);
   });
 });

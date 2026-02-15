@@ -3,21 +3,24 @@
    * Data Sync section — Push and Pull buttons for manual GitHub synchronization.
    * Displays loading states and success/error feedback messages.
    */
-  import type { SyncResult } from '../lib/types';
+  import type { SyncResult, SyncStatus } from '../lib/types';
   import { createGitHubClient } from '../lib/github-client';
   import { loadSettings } from '../lib/github-settings';
   import { pushToGitHub, pullFromGitHub } from '../lib/github-sync';
-  import { getAllBottles, clearAll, addBottle } from '../lib/storage';
+  import { getAllBottles, clearAll, addBottle, clearSyncQueue } from '../lib/storage';
+  import { cancelRetries } from '../lib/sync-manager';
 
   let syncing = $state(false);
   let result = $state<SyncResult | null>(null);
 
   /** Dispatches sync-status-changed event to update header indicator. */
-  function dispatchSyncStatus(status: 'syncing' | 'done'): void {
-    window.dispatchEvent(new CustomEvent('sync-status-changed', { detail: { status } }));
+  function dispatchSyncStatus(status: SyncStatus, pendingCount: number = 0): void {
+    window.dispatchEvent(
+      new CustomEvent('sync-status-changed', { detail: { status, pendingCount } }),
+    );
   }
 
-  /** Pushes all local bottles to GitHub. */
+  /** Pushes all local bottles to GitHub via the sync manager. */
   async function handlePush(): Promise<void> {
     const settings = loadSettings();
     if (!settings) return;
@@ -28,10 +31,18 @@
 
     const client = createGitHubClient(settings.pat);
     const bottles = await getAllBottles();
-    result = await pushToGitHub(client, settings.repo, bottles);
+    const pushResult = await pushToGitHub(client, settings.repo, bottles);
 
+    if (pushResult.status === 'success') {
+      cancelRetries();
+      await clearSyncQueue();
+      dispatchSyncStatus('connected');
+    } else {
+      dispatchSyncStatus('offline');
+    }
+
+    result = pushResult;
     syncing = false;
-    dispatchSyncStatus('done');
   }
 
   /** Pulls all bottles from GitHub, replacing local data. */
@@ -51,11 +62,15 @@
       for (const bottle of pullResult.bottles) {
         await addBottle(bottle);
       }
+      cancelRetries();
+      await clearSyncQueue();
+      dispatchSyncStatus('connected');
+    } else {
+      dispatchSyncStatus('offline');
     }
 
     result = { status: pullResult.status, message: pullResult.message };
     syncing = false;
-    dispatchSyncStatus('done');
   }
 </script>
 

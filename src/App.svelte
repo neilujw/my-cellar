@@ -7,6 +7,7 @@
   import type { Route } from './lib/router.svelte.ts';
   import type { SyncStatus } from './lib/types';
   import { loadSettings } from './lib/github-settings';
+  import { processQueue } from './lib/sync-manager';
   import Dashboard from './views/Dashboard.svelte';
   import AddBottle from './views/AddBottle.svelte';
   import Search from './views/Search.svelte';
@@ -31,25 +32,36 @@
   }
 
   let syncStatus = $state<SyncStatus>(getSyncStatus());
+  let pendingCount = $state(0);
 
   // Listen for settings changes from the Settings view
   $effect(() => {
     function handleSettingsChanged(): void {
       syncStatus = getSyncStatus();
+      pendingCount = 0;
     }
     window.addEventListener('settings-changed', handleSettingsChanged);
     return () => window.removeEventListener('settings-changed', handleSettingsChanged);
   });
 
-  // Listen for sync-status-changed events during push/pull operations
+  /** Detail payload for sync-status-changed events. */
+  interface SyncStatusDetail {
+    readonly status: SyncStatus;
+    readonly pendingCount?: number;
+  }
+
+  // Listen for sync-status-changed events from sync operations
   $effect(() => {
     function handleSyncStatusChanged(event: Event): void {
-      const detail = (event as CustomEvent<{ status: string }>).detail;
-      if (detail.status === 'syncing') {
-        syncStatus = 'syncing';
+      const detail = (event as CustomEvent<SyncStatusDetail>).detail;
+      if (detail.status === 'syncing' || detail.status === 'offline' || detail.status === 'error') {
+        syncStatus = detail.status;
+      } else if (detail.status === 'connected') {
+        syncStatus = 'connected';
       } else {
         syncStatus = getSyncStatus();
       }
+      pendingCount = detail.pendingCount ?? 0;
     }
     window.addEventListener('sync-status-changed', handleSyncStatusChanged);
     return () => window.removeEventListener('sync-status-changed', handleSyncStatusChanged);
@@ -60,6 +72,7 @@
     connected: 'Connected',
     offline: 'Offline',
     syncing: 'Syncing...',
+    error: 'Error',
   };
 
   const syncStatusColors: Record<SyncStatus, string> = {
@@ -67,7 +80,24 @@
     connected: 'text-green-600',
     offline: 'text-amber-500',
     syncing: 'text-blue-500',
+    error: 'text-red-600',
   };
+
+  /** Formatted sync status label including pending count when relevant. */
+  let syncStatusLabel = $derived(() => {
+    const base = syncStatusLabels[syncStatus];
+    if ((syncStatus === 'offline' || syncStatus === 'error') && pendingCount > 0) {
+      return `${base} (${pendingCount} pending)`;
+    }
+    return base;
+  });
+
+  // On mount, process any queued sync items if GitHub is configured
+  $effect(() => {
+    if (loadSettings()) {
+      processQueue();
+    }
+  });
 
   function handleTabClick(route: Route): void {
     navigate(route);
@@ -78,7 +108,7 @@
   <!-- Header -->
   <header class="flex items-center justify-between border-b border-gray-200 bg-white px-4 py-3">
     <h1 class="text-lg font-bold">My Cellar</h1>
-    <span class="text-sm {syncStatusColors[syncStatus]}" data-testid="sync-status">{syncStatusLabels[syncStatus]}</span>
+    <span class="text-sm {syncStatusColors[syncStatus]}" data-testid="sync-status">{syncStatusLabel()}</span>
   </header>
 
   <!-- Content area -->

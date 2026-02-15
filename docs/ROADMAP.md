@@ -1,6 +1,6 @@
 # Roadmap
 
-Updated at 2026-02-14
+Updated at 2026-02-15
 
 ## Step 1: Project Setup & Foundation ✅
 - [x] Initialize Svelte + Vite project with mobile-first configuration
@@ -44,11 +44,11 @@ Updated at 2026-02-14
 - [x] Create file organization structure by wine type
 - [x] Update sync status indicator to show active syncing state
 
-## Step 8: Offline Capability & Sync Queue
-- [ ] Implement offline detection and status display
-- [ ] Queue local changes when offline (add, update, consume actions)
-- [ ] Auto-sync queued changes when connection restored
-- [ ] Update sync status to reflect in-sync/error states
+## Step 8: Offline Capability & Sync Queue ✅
+- [x] Implement offline detection and status display
+- [x] Queue local changes when offline (add, update, consume actions)
+- [x] Auto-sync queued changes when connection restored
+- [x] Update sync status to reflect in-sync/error states
 
 ## Step 9: Conflict Resolution
 - [ ] Detect sync conflicts (outdated local state vs remote changes)

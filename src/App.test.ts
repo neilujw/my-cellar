@@ -1,17 +1,27 @@
 import 'fake-indexeddb/auto';
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, screen, cleanup, waitFor } from '@testing-library/svelte';
 import { userEvent } from '@testing-library/user-event';
+
+vi.mock('./lib/sync-manager', () => ({
+  processQueue: vi.fn(),
+}));
+
 import App from './App.svelte';
-import { resetDbConnection, clearAll } from './lib/storage';
+import { resetDbConnection, clearAll, clearSyncQueue } from './lib/storage';
+import { processQueue } from './lib/sync-manager';
+
+const mockedProcessQueue = vi.mocked(processQueue);
 
 describe('App', () => {
   beforeEach(async () => {
+    vi.clearAllMocks();
     window.location.hash = '';
     window.dispatchEvent(new HashChangeEvent('hashchange'));
     localStorage.clear();
     resetDbConnection();
     await clearAll();
+    await clearSyncQueue();
   });
 
   afterEach(() => {
@@ -83,6 +93,30 @@ describe('App', () => {
     });
   });
 
+  describe('startup sync', () => {
+    it('should process queue on mount when GitHub is configured', async () => {
+      localStorage.setItem(
+        'my-cellar-github-settings',
+        JSON.stringify({ repo: 'owner/repo', pat: 'ghp_test' }),
+      );
+
+      render(App);
+
+      await waitFor(() => {
+        expect(mockedProcessQueue).toHaveBeenCalled();
+      });
+    });
+
+    it('should not process queue when GitHub is not configured', async () => {
+      render(App);
+
+      // Give time for any async effects to run
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      expect(mockedProcessQueue).not.toHaveBeenCalled();
+    });
+  });
+
   describe('sync status', () => {
     it('should show "Not configured" when no settings exist', () => {
       render(App);
@@ -141,7 +175,7 @@ describe('App', () => {
       expect(screen.getByTestId('sync-status')).toHaveTextContent('Connected');
 
       window.dispatchEvent(
-        new CustomEvent('sync-status-changed', { detail: { status: 'syncing' } }),
+        new CustomEvent('sync-status-changed', { detail: { status: 'syncing', pendingCount: 0 } }),
       );
 
       await waitFor(() => {
@@ -157,7 +191,7 @@ describe('App', () => {
       render(App);
 
       window.dispatchEvent(
-        new CustomEvent('sync-status-changed', { detail: { status: 'syncing' } }),
+        new CustomEvent('sync-status-changed', { detail: { status: 'syncing', pendingCount: 0 } }),
       );
 
       await waitFor(() => {
@@ -165,11 +199,61 @@ describe('App', () => {
       });
 
       window.dispatchEvent(
-        new CustomEvent('sync-status-changed', { detail: { status: 'done' } }),
+        new CustomEvent('sync-status-changed', {
+          detail: { status: 'connected', pendingCount: 0 },
+        }),
       );
 
       await waitFor(() => {
         expect(screen.getByTestId('sync-status')).toHaveTextContent('Connected');
+      });
+    });
+
+    it('should show "Offline" with pending count when sync fails', async () => {
+      render(App);
+
+      window.dispatchEvent(
+        new CustomEvent('sync-status-changed', { detail: { status: 'offline', pendingCount: 3 } }),
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId('sync-status')).toHaveTextContent('Offline (3 pending)');
+      });
+    });
+
+    it('should show "Offline" without count when pending is zero', async () => {
+      render(App);
+
+      window.dispatchEvent(
+        new CustomEvent('sync-status-changed', { detail: { status: 'offline', pendingCount: 0 } }),
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId('sync-status')).toHaveTextContent('Offline');
+      });
+    });
+
+    it('should show "Error" with pending count when retries exhausted', async () => {
+      render(App);
+
+      window.dispatchEvent(
+        new CustomEvent('sync-status-changed', { detail: { status: 'error', pendingCount: 2 } }),
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId('sync-status')).toHaveTextContent('Error (2 pending)');
+      });
+    });
+
+    it('should show "Error" without count when pending is zero', async () => {
+      render(App);
+
+      window.dispatchEvent(
+        new CustomEvent('sync-status-changed', { detail: { status: 'error', pendingCount: 0 } }),
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId('sync-status')).toHaveTextContent('Error');
       });
     });
   });
