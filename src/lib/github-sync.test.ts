@@ -12,6 +12,13 @@ import type { Bottle } from './types';
 import type { OctokitClient } from './github-client';
 import { serializeBottle } from './bottle-serializer';
 
+/** Encodes a UTF-8 string to base64, matching GitHub blob API encoding. */
+function utf8ToBase64(str: string): string {
+  const bytes = new TextEncoder().encode(str);
+  const binary = Array.from(bytes, (b) => String.fromCharCode(b)).join('');
+  return btoa(binary);
+}
+
 function makeBottle(overrides: Partial<Bottle> = {}): Bottle {
   return {
     id: 'abc-123',
@@ -356,7 +363,7 @@ describe('pullFromGitHub', () => {
   it('should return bottles from GitHub', async () => {
     const bottle = makeBottle();
     const content = serializeBottle(bottle);
-    const encoded = btoa(content);
+    const encoded = utf8ToBase64(content);
 
     const client = createMockClient({
       treeData: {
@@ -427,7 +434,7 @@ describe('pullFromGitHub', () => {
 
   it('should skip invalid wine files', async () => {
     const validBottle = makeBottle();
-    const validContent = btoa(serializeBottle(validBottle));
+    const validContent = utf8ToBase64(serializeBottle(validBottle));
 
     const client = createMockClient({
       treeData: {
@@ -451,7 +458,7 @@ describe('pullFromGitHub', () => {
         if (file_sha === 'valid-sha') {
           return Promise.resolve({ data: { content: validContent, encoding: 'base64' } });
         }
-        return Promise.resolve({ data: { content: btoa('not json'), encoding: 'base64' } });
+        return Promise.resolve({ data: { content: utf8ToBase64('not json'), encoding: 'base64' } });
       }),
     });
 
@@ -464,7 +471,7 @@ describe('pullFromGitHub', () => {
   it('should return commitSha on successful pull', async () => {
     const bottle = makeBottle();
     const content = serializeBottle(bottle);
-    const encoded = btoa(content);
+    const encoded = utf8ToBase64(content);
 
     const client = createMockClient({
       treeData: {
@@ -517,7 +524,7 @@ describe('pullFromGitHub', () => {
       },
       getBlob: vi.fn().mockImplementation(({ file_sha }: { file_sha: string }) => {
         const content = file_sha === 'sha-1' ? serializeBottle(bottle1) : serializeBottle(bottle2);
-        return Promise.resolve({ data: { content: btoa(content), encoding: 'base64' } });
+        return Promise.resolve({ data: { content: utf8ToBase64(content), encoding: 'base64' } });
       }),
     });
 
@@ -603,7 +610,7 @@ describe('resolveConflictWithRemote', () => {
   it('should pull remote data and return bottles with commitSha', async () => {
     const bottle = makeBottle();
     const content = serializeBottle(bottle);
-    const encoded = btoa(content);
+    const encoded = utf8ToBase64(content);
 
     const client = createMockClient({
       treeData: {

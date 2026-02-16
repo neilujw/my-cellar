@@ -30,5 +30,9 @@ export function buildUpdatedBottle(
     country: fields.country,
     region: fields.region || undefined,
     grapeVariety: [...fields.grapeVariety],
+    history: original.history.map((entry) => ({
+      ...entry,
+      price: entry.price ? { ...entry.price } : undefined,
+    })),
   };
 }

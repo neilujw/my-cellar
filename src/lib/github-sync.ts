@@ -400,7 +400,12 @@ export async function pullFromGitHub(
           file_sha: entry.sha!,
         });
 
-        const content = atob(blobData.content);
+        const binary = atob(blobData.content);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) {
+          bytes[i] = binary.charCodeAt(i);
+        }
+        const content = new TextDecoder().decode(bytes);
         const bottle = deserializeBottle(content);
         if (bottle) {
           bottles.push(bottle);
