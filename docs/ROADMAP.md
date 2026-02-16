@@ -70,3 +70,33 @@ Updated at 2026-02-16
 - [x] Comprehensive error handling audit with global unhandled rejection handler
 - [x] Full PWA support (Service Worker, Web App Manifest, installability)
 - [x] Playwright E2E tests for core user flows (add bottle, search, navigation)
+
+## Step 12: Autocomplete for Country, Region & Grape Varieties
+- [ ] Implement autocomplete dropdown for Country field in Add Bottle form
+- [ ] Implement autocomplete dropdown for Region field in Add Bottle form
+- [ ] Implement autocomplete dropdown for Grape Varieties field (multi-select)
+- [ ] Extract existing values from current bottles to populate suggestion lists
+- [ ] Allow free-text entry for new values while suggesting existing ones
+
+## Step 13: Update Bottle Rating & Notes
+- [ ] Create edit bottle view/modal for updating rating and notes
+- [ ] Add edit action button on bottle detail view
+- [ ] Add edit action from dashboard and search results
+- [ ] Implement form validation and save functionality
+- [ ] Handle uniqueness constraint: prevent editing name/vintage/type (key fields) or validate for duplicates if allowed
+- [ ] Update sync to push changes to GitHub
+
+## Step 14: Quick Consume/Remove Actions
+- [ ] Add consume action button to bottle cards in dashboard view
+- [ ] Add consume action button to bottle cards in search results
+- [ ] Add remove action button to bottle cards in dashboard and search views
+- [ ] Implement quantity input modal for consume/remove actions
+- [ ] Update history and sync changes to GitHub
+
+## Step 15: Drinking Window (Consume Starting From)
+- [ ] Add "consumeStartingFrom" field to bottle data model (year format: YYYY)
+- [ ] Add optional year input field to Add Bottle form
+- [ ] Display drinking window indicator on bottle cards (e.g., "Drink from 2028")
+- [ ] Include field in edit bottle functionality (Step 13)
+- [ ] Add visual indicator for bottles ready to drink vs aging
+- [ ] Add "Bottles to Drink This Year" section on dashboard (consumeStartingFrom ≤ current year)
