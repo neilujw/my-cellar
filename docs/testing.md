@@ -16,5 +16,4 @@
 - Group related tests using `describe` blocks by feature/component
 - Run tests in watch mode during development
 - Run full test suite in CI before allowing merges
-- Test bundle size constraints (fail if bundle exceeds 50kb)
 - Avoid snapshot testing (brittle, doesn't prove behavior)

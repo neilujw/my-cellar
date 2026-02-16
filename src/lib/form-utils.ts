@@ -115,7 +115,7 @@ export function createBottleFromForm(data: FormData): Bottle {
     type: data.type as WineType,
     country: data.country.trim(),
     region: data.region.trim(),
-    grapeVariety: data.grapeVariety,
+    grapeVariety: [...data.grapeVariety],
     ...(data.location.trim() && { location: data.location.trim() }),
     ...(data.rating.trim() && { rating: Number(data.rating) }),
     ...(data.notes.trim() && { notes: data.notes.trim() }),

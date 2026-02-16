@@ -14,6 +14,7 @@
   import Search from './views/Search.svelte';
   import Settings from './views/Settings.svelte';
   import ConflictModal from './components/ConflictModal.svelte';
+  import ToastContainer from './components/ToastContainer.svelte';
 
   interface Tab {
     readonly route: Route;
@@ -123,6 +124,8 @@
       <ConflictModal client={createGitHubClient(settings.pat)} repo={settings.repo} />
     {/if}
   {/if}
+
+  <ToastContainer />
 
   <nav class="flex border-t border-gray-200 bg-white" aria-label="Main navigation">
     {#each tabs as tab (tab.route)}

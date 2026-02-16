@@ -10,6 +10,7 @@
   import { addBottle, getAllBottles, updateBottle } from '../lib/storage';
   import { calculateQuantity, findDuplicate } from '../lib/bottle-utils';
   import { attemptSync } from '../lib/sync-manager';
+  import { toastSuccess, toastError } from '../lib/toast.svelte';
   import {
     createBottleFromForm,
     createEmptyFormData,
@@ -99,18 +100,25 @@
     errors = validateForm(form);
     if (Object.keys(errors).length > 0) return;
 
-    if (selectedBottle) {
-      const entry = createHistoryEntryFromForm(form);
-      await updateBottle({ ...selectedBottle, history: [...selectedBottle.history, entry] });
-      attemptSync(`Updated bottle: ${selectedBottle.name} ${selectedBottle.vintage}`);
-      navigate('/');
-      return;
-    }
+    try {
+      if (selectedBottle) {
+        const entry = createHistoryEntryFromForm(form);
+        await updateBottle({ ...selectedBottle, grapeVariety: [...selectedBottle.grapeVariety], history: [...selectedBottle.history, entry] });
+        attemptSync(`Updated bottle: ${selectedBottle.name} ${selectedBottle.vintage}`);
+        toastSuccess(`Updated ${selectedBottle.name} ${selectedBottle.vintage}`);
+        navigate('/');
+        return;
+      }
 
-    const bottle = createBottleFromForm(form);
-    await addBottle(bottle);
-    attemptSync(`Added bottle: ${form.name} ${form.vintage}`);
-    navigate('/');
+      const bottle = createBottleFromForm(form);
+      await addBottle(bottle);
+      attemptSync(`Added bottle: ${form.name} ${form.vintage}`);
+      toastSuccess(`Added ${form.name} ${form.vintage}`);
+      navigate('/');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to save bottle';
+      toastError(message);
+    }
   }
 </script>
 

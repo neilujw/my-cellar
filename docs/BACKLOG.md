@@ -1,26 +1,12 @@
 # Backlog
 
-# Monitor Tailwind CSS impact on bundle size
+# ~~Monitor Tailwind CSS impact on bundle size~~ (Resolved)
 
-## Context
-During project setup planning, Tailwind CSS was chosen for styling. The project has a 50kb gzipped bundle size target for the final app.
+Resolved on 2026-02-16: Bundle size hard limit removed entirely. Tailwind CSS output is minimal (3.78 KB gzipped). See `docs/decisions/20260216-remove-bundle-size-limit.md`.
 
-## Dependency
-Depends on Step 10 (Polish & Optimization) where final bundle size optimization is performed.
+# ~~Consider adding Playwright for E2E testing~~ (Resolved)
 
-## Details
-Tailwind CSS with proper purging typically produces small output, but the impact on the overall bundle size should be monitored throughout development. If the 50kb target becomes unachievable, consider switching to plain scoped CSS or a lighter alternative. Measure gzipped size after each major step.
-
-# Consider adding Playwright for E2E testing
-
-## Context
-During project setup planning, only Vitest was chosen for testing. End-to-end browser testing was deferred to keep the initial setup simple.
-
-## Dependency
-No hard dependency. Can be added at any point, but most useful after Step 3 (Dashboard) when there is real UI to test.
-
-## Details
-Playwright could provide confidence in cross-browser behavior and full user flow testing (e.g., adding a bottle, syncing to GitHub). Evaluate whether Vitest with `@testing-library/svelte` provides sufficient coverage, and add Playwright if gaps are found.
+Resolved on 2026-02-16: Playwright will be added in Step 11 for core user flows (add bottle, search/filter, navigation). See `docs/decisions/20260216-playwright-e2e.md`.
 
 # Autocomplete for Add Bottle form fields
 

@@ -64,8 +64,9 @@ Updated at 2026-02-16
 - [x] Reactive duplicate re-detection when name, vintage, or type changes
 - [x] Keyboard-accessible dropdown navigation (arrow keys, Enter, Escape)
 
-## Step 11: Polish & Optimization
-- [ ] Final bundle size optimization and code splitting
-- [ ] Performance optimization for mobile devices
-- [ ] Comprehensive error handling and user feedback messages
-- [ ] End-to-end testing and bug fixes
+## Step 11: Polish & Optimization ✅
+- [x] Remove bundle size hard limit (Svelte + Vite + Tailwind are inherently lightweight)
+- [x] Toast notification system for user feedback (success, error, info variants)
+- [x] Comprehensive error handling audit with global unhandled rejection handler
+- [x] Full PWA support (Service Worker, Web App Manifest, installability)
+- [x] Playwright E2E tests for core user flows (add bottle, search, navigation)

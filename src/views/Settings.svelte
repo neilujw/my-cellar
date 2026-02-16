@@ -8,6 +8,7 @@
   import { validateRepo, validatePat } from '../lib/settings-utils';
   import { createGitHubClient, testConnection } from '../lib/github-client';
   import SyncSection from './SyncSection.svelte';
+  import { toastSuccess, toastError, toastInfo } from '../lib/toast.svelte';
 
   let repo = $state('');
   let pat = $state('');
@@ -40,6 +41,12 @@
     const client = createGitHubClient(pat.trim());
     connectionResult = await testConnection(client, repo.trim());
     testing = false;
+
+    if (connectionResult.status === 'connected') {
+      toastSuccess('Connection successful');
+    } else if (connectionResult.status === 'error') {
+      toastError(connectionResult.message);
+    }
   }
 
   function handleSave(): void {
@@ -57,6 +64,7 @@
     connectionResult = null;
     saved = false;
     window.dispatchEvent(new CustomEvent('settings-changed'));
+    toastInfo('Disconnected from GitHub');
   }
 </script>
 

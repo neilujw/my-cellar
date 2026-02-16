@@ -41,30 +41,39 @@ export async function attemptSync(actionDescription: string): Promise<void> {
   const settings = loadSettings();
   if (!settings) return;
 
-  dispatchSyncStatus('syncing', await getSyncQueueCount());
+  try {
+    dispatchSyncStatus('syncing', await getSyncQueueCount());
 
-  const client = createGitHubClient(settings.pat);
-  const bottles = await getAllBottles();
-  const lastSyncedSha = getLastSyncedCommitSha();
-  const result = await pushToGitHub(client, settings.repo, bottles, lastSyncedSha);
+    const client = createGitHubClient(settings.pat);
+    const bottles = await getAllBottles();
+    const lastSyncedSha = getLastSyncedCommitSha();
+    const result = await pushToGitHub(client, settings.repo, bottles, lastSyncedSha);
 
-  if (result.status === 'success') {
-    retryAttempt = 0;
-    await clearSyncQueue();
-    if (result.commitSha) {
-      setLastSyncedCommitSha(result.commitSha);
+    if (result.status === 'success') {
+      retryAttempt = 0;
+      await clearSyncQueue();
+      if (result.commitSha) {
+        setLastSyncedCommitSha(result.commitSha);
+      }
+      dispatchSyncStatus('connected', 0);
+    } else if (result.status === 'conflict') {
+      dispatchSyncStatus('conflict', 0);
+    } else {
+      await addToSyncQueue({
+        timestamp: new Date().toISOString(),
+        action: actionDescription,
+      });
+      const pendingCount = await getSyncQueueCount();
+      dispatchSyncStatus('offline', pendingCount);
+      scheduleRetry();
     }
-    dispatchSyncStatus('connected', 0);
-  } else if (result.status === 'conflict') {
-    dispatchSyncStatus('conflict', 0);
-  } else {
+  } catch {
     await addToSyncQueue({
       timestamp: new Date().toISOString(),
       action: actionDescription,
     });
     const pendingCount = await getSyncQueueCount();
-    dispatchSyncStatus('offline', pendingCount);
-    scheduleRetry();
+    dispatchSyncStatus('error', pendingCount);
   }
 }
 
@@ -102,26 +111,31 @@ export async function processQueue(): Promise<void> {
   const queue = await getSyncQueue();
   if (queue.length === 0) return;
 
-  const pendingCount = await getSyncQueueCount();
-  dispatchSyncStatus('syncing', pendingCount);
+  try {
+    const pendingCount = await getSyncQueueCount();
+    dispatchSyncStatus('syncing', pendingCount);
 
-  const client = createGitHubClient(settings.pat);
-  const bottles = await getAllBottles();
-  const lastSyncedSha = getLastSyncedCommitSha();
-  const result = await pushToGitHub(client, settings.repo, bottles, lastSyncedSha);
+    const client = createGitHubClient(settings.pat);
+    const bottles = await getAllBottles();
+    const lastSyncedSha = getLastSyncedCommitSha();
+    const result = await pushToGitHub(client, settings.repo, bottles, lastSyncedSha);
 
-  if (result.status === 'success') {
-    retryAttempt = 0;
-    await clearSyncQueue();
-    if (result.commitSha) {
-      setLastSyncedCommitSha(result.commitSha);
+    if (result.status === 'success') {
+      retryAttempt = 0;
+      await clearSyncQueue();
+      if (result.commitSha) {
+        setLastSyncedCommitSha(result.commitSha);
+      }
+      dispatchSyncStatus('connected', 0);
+    } else if (result.status === 'conflict') {
+      dispatchSyncStatus('conflict', 0);
+    } else {
+      dispatchSyncStatus('offline', pendingCount);
+      scheduleRetry();
     }
-    dispatchSyncStatus('connected', 0);
-  } else if (result.status === 'conflict') {
-    dispatchSyncStatus('conflict', 0);
-  } else {
-    dispatchSyncStatus('offline', pendingCount);
-    scheduleRetry();
+  } catch {
+    const pendingCount = await getSyncQueueCount();
+    dispatchSyncStatus('error', pendingCount);
   }
 }
 

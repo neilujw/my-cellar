@@ -9,6 +9,7 @@
   import { pushToGitHub, pullFromGitHub } from '../lib/github-sync';
   import { getAllBottles, clearAll, addBottle, clearSyncQueue } from '../lib/storage';
   import { cancelRetries } from '../lib/sync-manager';
+  import { toastSuccess, toastError } from '../lib/toast.svelte';
 
   let syncing = $state(false);
   let result = $state<SyncResult | null>(null);
@@ -29,26 +30,37 @@
     result = null;
     dispatchSyncStatus('syncing');
 
-    const client = createGitHubClient(settings.pat);
-    const bottles = await getAllBottles();
-    const lastSyncedSha = getLastSyncedCommitSha();
-    const pushResult = await pushToGitHub(client, settings.repo, bottles, lastSyncedSha);
+    try {
+      const client = createGitHubClient(settings.pat);
+      const bottles = await getAllBottles();
+      const lastSyncedSha = getLastSyncedCommitSha();
+      const pushResult = await pushToGitHub(client, settings.repo, bottles, lastSyncedSha);
 
-    if (pushResult.status === 'success') {
-      if (pushResult.commitSha) {
-        setLastSyncedCommitSha(pushResult.commitSha);
+      if (pushResult.status === 'success') {
+        if (pushResult.commitSha) {
+          setLastSyncedCommitSha(pushResult.commitSha);
+        }
+        cancelRetries();
+        await clearSyncQueue();
+        dispatchSyncStatus('connected');
+        toastSuccess('Push completed successfully');
+      } else if (pushResult.status === 'conflict') {
+        dispatchSyncStatus('conflict');
+        toastError('Conflict detected — resolve before syncing');
+      } else {
+        dispatchSyncStatus('offline');
+        toastError(pushResult.message);
       }
-      cancelRetries();
-      await clearSyncQueue();
-      dispatchSyncStatus('connected');
-    } else if (pushResult.status === 'conflict') {
-      dispatchSyncStatus('conflict');
-    } else {
-      dispatchSyncStatus('offline');
-    }
 
-    result = pushResult;
-    syncing = false;
+      result = pushResult;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Push failed unexpectedly';
+      result = { status: 'error', message };
+      dispatchSyncStatus('error');
+      toastError(message);
+    } finally {
+      syncing = false;
+    }
   }
 
   /** Pulls all bottles from GitHub, replacing local data. */
@@ -60,26 +72,36 @@
     result = null;
     dispatchSyncStatus('syncing');
 
-    const client = createGitHubClient(settings.pat);
-    const pullResult = await pullFromGitHub(client, settings.repo);
+    try {
+      const client = createGitHubClient(settings.pat);
+      const pullResult = await pullFromGitHub(client, settings.repo);
 
-    if (pullResult.status === 'success' && pullResult.bottles) {
-      await clearAll();
-      for (const bottle of pullResult.bottles) {
-        await addBottle(bottle);
+      if (pullResult.status === 'success' && pullResult.bottles) {
+        await clearAll();
+        for (const bottle of pullResult.bottles) {
+          await addBottle(bottle);
+        }
+        if (pullResult.commitSha) {
+          setLastSyncedCommitSha(pullResult.commitSha);
+        }
+        cancelRetries();
+        await clearSyncQueue();
+        dispatchSyncStatus('connected');
+        toastSuccess('Pull completed successfully');
+      } else {
+        dispatchSyncStatus('offline');
+        toastError(pullResult.message);
       }
-      if (pullResult.commitSha) {
-        setLastSyncedCommitSha(pullResult.commitSha);
-      }
-      cancelRetries();
-      await clearSyncQueue();
-      dispatchSyncStatus('connected');
-    } else {
-      dispatchSyncStatus('offline');
+
+      result = { status: pullResult.status, message: pullResult.message };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Pull failed unexpectedly';
+      result = { status: 'error', message };
+      dispatchSyncStatus('error');
+      toastError(message);
+    } finally {
+      syncing = false;
     }
-
-    result = { status: pullResult.status, message: pullResult.message };
-    syncing = false;
   }
 </script>
 

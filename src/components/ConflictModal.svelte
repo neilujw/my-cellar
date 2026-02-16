@@ -10,6 +10,7 @@
   import { setLastSyncedCommitSha } from '../lib/github-settings';
   import { clearAll, addBottle, clearSyncQueue, getAllBottles } from '../lib/storage';
   import { cancelRetries } from '../lib/sync-manager';
+  import { toastSuccess, toastError } from '../lib/toast.svelte';
 
   interface Props {
     /** Authenticated Octokit client. */
@@ -35,15 +36,25 @@
     loading = true;
     result = null;
 
-    const bottles = await getAllBottles();
-    const prResult = await createConflictPR(client, repo, bottles);
+    try {
+      const bottles = await getAllBottles();
+      const prResult = await createConflictPR(client, repo, bottles);
 
-    result = prResult;
-    loading = false;
+      result = prResult;
 
-    if (prResult.status === 'success') {
-      dispatchSyncStatus('connected');
-      dispatchConflictResolved();
+      if (prResult.status === 'success') {
+        dispatchSyncStatus('connected');
+        dispatchConflictResolved();
+        toastSuccess('Pull request created');
+      } else {
+        toastError(prResult.message);
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to create PR';
+      result = { status: 'error', message };
+      toastError(message);
+    } finally {
+      loading = false;
     }
   }
 
@@ -52,25 +63,33 @@
     loading = true;
     result = null;
 
-    const overwriteResult = await resolveConflictWithRemote(client, repo);
+    try {
+      const overwriteResult = await resolveConflictWithRemote(client, repo);
 
-    if (overwriteResult.status === 'success' && overwriteResult.bottles) {
-      await clearAll();
-      for (const bottle of overwriteResult.bottles) {
-        await addBottle(bottle);
+      if (overwriteResult.status === 'success' && overwriteResult.bottles) {
+        await clearAll();
+        for (const bottle of overwriteResult.bottles) {
+          await addBottle(bottle);
+        }
+        cancelRetries();
+        await clearSyncQueue();
+        if (overwriteResult.commitSha) {
+          setLastSyncedCommitSha(overwriteResult.commitSha);
+        }
+        dispatchSyncStatus('connected');
+        dispatchConflictResolved();
+        toastSuccess('Local data replaced with remote');
+      } else {
+        result = overwriteResult;
+        toastError(overwriteResult.message);
       }
-      cancelRetries();
-      await clearSyncQueue();
-      if (overwriteResult.commitSha) {
-        setLastSyncedCommitSha(overwriteResult.commitSha);
-      }
-      dispatchSyncStatus('connected');
-      dispatchConflictResolved();
-    } else {
-      result = overwriteResult;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to resolve conflict';
+      result = { status: 'error', message };
+      toastError(message);
+    } finally {
+      loading = false;
     }
-
-    loading = false;
   }
 
   /** Dispatches conflict-resolved custom event. */
