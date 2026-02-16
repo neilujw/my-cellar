@@ -94,6 +94,21 @@ export function getRecentActivity(bottles: readonly Bottle[], limit: number): Ac
 }
 
 /**
+ * Returns the N most recently active bottles, sorted by latest history date descending.
+ * Only includes bottles with at least one history entry.
+ */
+export function getRecentBottles(bottles: readonly Bottle[], limit: number): Bottle[] {
+  return [...bottles]
+    .filter((b) => b.history.length > 0)
+    .sort((a, b) => {
+      const aLatest = a.history.reduce((max, e) => (e.date > max ? e.date : max), '');
+      const bLatest = b.history.reduce((max, e) => (e.date > max ? e.date : max), '');
+      return bLatest.localeCompare(aLatest);
+    })
+    .slice(0, limit);
+}
+
+/**
  * Formats a history action for display.
  * Capitalizes the first letter (e.g., "added" -> "Added").
  */

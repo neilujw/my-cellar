@@ -1,6 +1,9 @@
 # Changelog
 
 ## 2026-02-16
+Update Bottle Rating & Notes (Step 13). Tapping a BottleCard now opens a full-page detail modal displaying all bottle fields (name, vintage, type, origin, grape varieties, location, rating, notes) and the full history timeline with date, action, quantity, price, and notes per entry. An Edit button opens an edit modal overlay where key fields (name, vintage, type) are visible but disabled, and all other fields (rating, notes, location, country, region, grape variety) are editable with autocomplete and tag input reuse. Saving updates IndexedDB via `updateBottle()`, triggers GitHub sync via `attemptSync()`, shows a success toast, and refreshes the detail view. Dashboard now includes a "Recent Bottles" section with clickable BottleCards. Added 39 new tests across BottleDetail, EditBottle, HistoryTimeline, edit-bottle-utils, and updated BottleCard/Dashboard/Search tests. All 443 Vitest tests pass. No new dependencies added.
+
+## 2026-02-16
 Autocomplete for Country & Region (Step 12). Created a reusable TextAutocomplete component that shows a dropdown of all suggestions on focus, filters with case-insensitive "contains" matching as the user types, highlights the matched portion, and supports full keyboard navigation (arrow keys, Enter, Escape). Replaced the plain Country and Region text inputs in the Add Bottle form with TextAutocomplete, populated with unique values extracted from existing bottles. Free-text entry remains allowed for new values not yet in the cellar. Fields become disabled when an existing bottle is selected (preserving read-only behavior). Full ARIA support (combobox role, listbox, aria-expanded, aria-activedescendant). Added 21 unit tests for TextAutocomplete and 4 integration tests in AddBottle. All 403 Vitest tests pass. No new dependencies added.
 
 ## 2026-02-16

@@ -82,10 +82,12 @@ A personal wine cellar management application that prioritizes data ownership an
 
 ## Application Views
 
-1. **Dashboard (Default)**: Overview of cellar with current inventory, statistics, and sync status
+1. **Dashboard (Default)**: Overview of cellar with current inventory, statistics, recent bottles, and sync status
 2. **Add Bottle**: Form to add new bottles or update quantity of existing bottles
 3. **Search**: Search and filter wines by type, country, region, vintage, rating
 4. **Settings**: Configure GitHub repository URL, PAT token, sync preferences
+
+**Bottle Detail (Modal)**: Tapping a BottleCard (on Dashboard or Search) opens a full-page modal showing all bottle fields and full history timeline. An Edit button opens an edit modal overlay where non-key fields (rating, notes, location, country, region, grape variety) can be updated. Key fields (name, vintage, type) are visible but disabled.
 
 **Sync Status**: Persistent indicator visible on all views showing current sync state and any conflicts/errors.
 

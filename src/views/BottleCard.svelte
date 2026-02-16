@@ -5,9 +5,10 @@
 
   interface Props {
     bottle: Bottle;
+    onclick?: (bottle: Bottle) => void;
   }
 
-  let { bottle }: Props = $props();
+  let { bottle, onclick }: Props = $props();
 
   const quantity = $derived(calculateQuantity(bottle.history));
 
@@ -28,7 +29,14 @@
   };
 </script>
 
-<div class="rounded-lg border border-gray-200 bg-white p-3" data-testid="bottle-card">
+<div
+  class="rounded-lg border border-gray-200 bg-white p-3 {onclick ? 'cursor-pointer hover:border-indigo-300 hover:shadow-sm transition-all' : ''}"
+  data-testid="bottle-card"
+  onclick={() => onclick?.(bottle)}
+  onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onclick?.(bottle); } }}
+  role={onclick ? 'button' : undefined}
+  tabindex={onclick ? 0 : undefined}
+>
   <div class="flex items-start justify-between gap-2">
     <div class="min-w-0 flex-1">
       <h3 class="truncate font-semibold text-gray-900" data-testid="bottle-card-name">

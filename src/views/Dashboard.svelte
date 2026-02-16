@@ -9,27 +9,38 @@
   import {
     formatAction,
     getRecentActivity,
+    getRecentBottles,
     getStatsByType,
     getTotalBottleCount,
     getTopRegions,
   } from '../lib/dashboard-utils';
+  import BottleCard from './BottleCard.svelte';
+  import BottleDetail from './BottleDetail.svelte';
 
   let bottles = $state<Bottle[]>([]);
   let loaded = $state(false);
+  let selectedBottle = $state<Bottle | null>(null);
 
   /** Load bottles from IndexedDB on mount. */
-  $effect(() => {
+  function loadBottles(): void {
     getAllBottles().then((data) => {
       bottles = data;
       loaded = true;
     });
-  });
+  }
+  $effect(loadBottles);
 
   const totalCount = $derived(getTotalBottleCount(bottles));
   const statsByType = $derived(getStatsByType(bottles));
   const topRegions = $derived(getTopRegions(bottles, 3));
   const recentActivity = $derived(getRecentActivity(bottles, 10));
+  const recentBottles = $derived(getRecentBottles(bottles, 5));
   const hasBottles = $derived(bottles.length > 0);
+
+  function handleBottleUpdate(): void {
+    selectedBottle = null;
+    loadBottles();
+  }
 
   /** Labels for wine type display. */
   const typeLabels: Record<WineType, string> = {
@@ -91,6 +102,18 @@
       {/if}
     </section>
 
+    <!-- Recent Bottles -->
+    {#if recentBottles.length > 0}
+      <section class="mt-6" aria-label="Recent bottles">
+        <h3 class="text-sm font-semibold text-gray-700">Recent Bottles</h3>
+        <div class="mt-2 space-y-2" data-testid="recent-bottles">
+          {#each recentBottles as bottle (bottle.id)}
+            <BottleCard {bottle} onclick={(b) => { selectedBottle = b; }} />
+          {/each}
+        </div>
+      </section>
+    {/if}
+
     <!-- Recent Activity -->
     {#if recentActivity.length > 0}
       <section class="mt-6" aria-label="Recent activity">
@@ -106,4 +129,8 @@
       </section>
     {/if}
   </div>
+{/if}
+
+{#if selectedBottle}
+  <BottleDetail bottle={selectedBottle} onclose={() => { selectedBottle = null; }} onupdate={handleBottleUpdate} />
 {/if}

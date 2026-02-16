@@ -13,20 +13,28 @@
     type SortOption,
   } from '../lib/search-utils';
   import BottleCard from './BottleCard.svelte';
+  import BottleDetail from './BottleDetail.svelte';
   import FilterPanel from './FilterPanel.svelte';
 
   let allBottles = $state<Bottle[]>([]);
   let loaded = $state(false);
   let filters = $state<SearchFilters>(createEmptyFilters());
   let sortOption = $state<SortOption>('name');
+  let selectedBottle = $state<Bottle | null>(null);
 
   /** Load bottles from IndexedDB on mount. */
-  $effect(() => {
+  function loadBottles(): void {
     getAllBottles().then((data) => {
       allBottles = data;
       loaded = true;
     });
-  });
+  }
+  $effect(loadBottles);
+
+  function handleBottleUpdate(): void {
+    selectedBottle = null;
+    loadBottles();
+  }
 
   const countries = $derived(getUniqueCountries(allBottles));
   const regions = $derived(getUniqueRegions(allBottles));
@@ -43,16 +51,8 @@
     recentlyAdded: 'Recently added',
   };
 
-  /** Update filters from the filter panel. */
-  function handleFilterChange(updated: SearchFilters): void {
-    filters = updated;
-  }
-
-  /** Reset all filters and search text. */
-  function clearAll(): void {
-    filters = createEmptyFilters();
-    sortOption = 'name';
-  }
+  function handleFilterChange(updated: SearchFilters): void { filters = updated; }
+  function clearAll(): void { filters = createEmptyFilters(); sortOption = 'name'; }
 </script>
 
 {#if !loaded}
@@ -98,14 +98,8 @@
       </select>
     </div>
 
-    <!-- Filter panel -->
     <div class="mt-2">
-      <FilterPanel
-        {filters}
-        {countries}
-        {regions}
-        onchange={handleFilterChange}
-      />
+      <FilterPanel {filters} {countries} {regions} onchange={handleFilterChange} />
     </div>
 
     <!-- Results count and clear -->
@@ -138,9 +132,13 @@
     {:else}
       <div class="mt-3 space-y-2" data-testid="search-results">
         {#each sortedBottles as bottle (bottle.id)}
-          <BottleCard {bottle} />
+          <BottleCard {bottle} onclick={(b) => { selectedBottle = b; }} />
         {/each}
       </div>
     {/if}
   </div>
+{/if}
+
+{#if selectedBottle}
+  <BottleDetail bottle={selectedBottle} onclose={() => { selectedBottle = null; }} onupdate={handleBottleUpdate} />
 {/if}

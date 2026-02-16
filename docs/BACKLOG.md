@@ -8,16 +8,9 @@ Resolved on 2026-02-16: Bundle size hard limit removed entirely. Tailwind CSS ou
 
 Resolved on 2026-02-16: Playwright will be added in Step 11 for core user flows (add bottle, search/filter, navigation). See `docs/decisions/20260216-playwright-e2e.md`.
 
-# Autocomplete for Add Bottle form fields
+# ~~Autocomplete for Add Bottle form fields~~ (Resolved)
 
-## Context
-During Add Bottle planning, all text fields (country, region, grape variety) were kept as free-text input. The user wants autocomplete suggestions to speed up data entry and reduce typos.
-
-## Dependency
-Depends on Step 4 (Add Bottle) being implemented first. Can be added as an enhancement once the basic form works and there is existing bottle data to suggest from.
-
-## Details
-Add autocomplete/suggestion functionality to selected fields on the Add Bottle form (e.g., country, region, grape variety). Suggestions should be sourced from existing bottle data in the cellar — as the user types, matching values from previously entered bottles are shown. This avoids the need for an external database while improving consistency and input speed. Consider which fields benefit most from autocomplete and whether to use a lightweight datalist or a custom dropdown component.
+Resolved on 2026-02-16: Autocomplete implemented for name (Step 10), country, and region (Step 12) in the Add Bottle form, and for country and region in the Edit Bottle form (Step 13). Grape variety uses a free-text tag input (GrapeTagInput). See `docs/decisions/20260215-autocomplete-duplicate-prevention.md` and `docs/decisions/20260216-autocomplete-country-region.md`.
 
 # Consume/Remove bottle actions
 
@@ -25,10 +18,18 @@ Add autocomplete/suggestion functionality to selected fields on the Add Bottle f
 During Add Bottle planning, the form was scoped to add-only. Consuming and removing bottles requires a different UI entry point.
 
 ## Dependency
-Depends on Step 5 (Search & Filter) which provides the bottle listing where consume/remove actions would be triggered from.
+Depends on Step 13 (Update Bottle Rating & Notes) which provides the bottle detail view where consume/remove actions can be added.
 
 ## Details
-Users need a way to mark bottles as consumed or removed. This should be accessible from a bottle detail view or directly from search results. The action should create a history entry with the appropriate action type (consumed/removed), quantity, and optional notes. Consider a swipe gesture or action menu on mobile for quick access.
+Users need a way to mark bottles as consumed or removed. This should be accessible from the bottle detail view (BottleDetail modal) or directly from search results. The action should create a history entry with the appropriate action type (consumed/removed), quantity, and optional notes. Consider a swipe gesture or action menu on mobile for quick access.
+
+# Editing key fields (name, vintage, type)
+
+## Context
+During Step 13 (Update Bottle Rating & Notes) planning, editing was scoped to non-key fields only. Key fields (name, vintage, type) are used for duplicate detection and determine the file path in GitHub (`wines/{type}/wine-{uuid}.json`).
+
+## Details
+Allowing users to edit key fields would require re-running duplicate validation (to prevent creating a duplicate by renaming), potentially renaming/moving the file in GitHub if the type changes, and updating any references. This adds significant complexity and should be planned as a separate feature if needed.
 
 # ~~Discuss bundle size strategy~~ (Resolved)
 

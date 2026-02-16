@@ -192,4 +192,25 @@ describe('Dashboard', () => {
       expect(regions).not.toHaveTextContent('Bordeaux');
     });
   });
+
+  describe('bottle detail modal', () => {
+    it('should open detail modal when a BottleCard is clicked', async () => {
+      const bottles = [
+        makeBottle({
+          id: 'a',
+          name: 'Chateau Margaux',
+          history: [{ date: '2026-01-01', action: HistoryAction.Added, quantity: 3 }],
+        }),
+      ];
+      vi.spyOn(storage, 'getAllBottles').mockResolvedValue(bottles);
+      render(Dashboard);
+      const user = userEvent.setup();
+
+      await screen.findByTestId('recent-bottles');
+      await user.click(screen.getByTestId('bottle-card'));
+
+      expect(screen.getByTestId('bottle-detail-modal')).toBeInTheDocument();
+      expect(screen.getByTestId('detail-name')).toHaveTextContent('Chateau Margaux');
+    });
+  });
 });

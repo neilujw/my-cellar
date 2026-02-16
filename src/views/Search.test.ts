@@ -183,4 +183,21 @@ describe('Search', () => {
       expect(cards).toHaveLength(2);
     });
   });
+
+  describe('bottle detail modal', () => {
+    it('should open detail modal when a BottleCard is clicked', async () => {
+      const bottles = [
+        makeBottle({ id: '1', name: 'Chateau Margaux' }),
+      ];
+      vi.spyOn(storage, 'getAllBottles').mockResolvedValue(bottles);
+      render(Search);
+      const user = userEvent.setup();
+
+      await screen.findByTestId('search-results');
+      await user.click(screen.getByTestId('bottle-card'));
+
+      expect(screen.getByTestId('bottle-detail-modal')).toBeInTheDocument();
+      expect(screen.getByTestId('detail-name')).toHaveTextContent('Chateau Margaux');
+    });
+  });
 });

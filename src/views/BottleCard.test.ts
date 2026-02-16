@@ -1,6 +1,7 @@
 import 'fake-indexeddb/auto';
-import { describe, it, expect, afterEach } from 'vitest';
+import { describe, it, expect, afterEach, vi } from 'vitest';
 import { render, screen, cleanup } from '@testing-library/svelte';
+import { userEvent } from '@testing-library/user-event';
 
 import BottleCard from './BottleCard.svelte';
 import { HistoryAction, WineType, type Bottle } from '../lib/types';
@@ -68,5 +69,34 @@ describe('BottleCard', () => {
     render(BottleCard, { props: { bottle: makeBottle({ type: WineType.Sparkling }) } });
 
     expect(screen.getByTestId('bottle-card-type')).toHaveTextContent('Sparkling');
+  });
+
+  describe('click handler', () => {
+    it('should call onclick with the bottle when clicked', async () => {
+      const onclick = vi.fn();
+      const bottle = makeBottle();
+      render(BottleCard, { props: { bottle, onclick } });
+      const user = userEvent.setup();
+
+      await user.click(screen.getByTestId('bottle-card'));
+
+      expect(onclick).toHaveBeenCalledOnce();
+      expect(onclick).toHaveBeenCalledWith(bottle);
+    });
+
+    it('should have button role and cursor when onclick is provided', () => {
+      render(BottleCard, { props: { bottle: makeBottle(), onclick: vi.fn() } });
+
+      const card = screen.getByTestId('bottle-card');
+      expect(card).toHaveAttribute('role', 'button');
+      expect(card).toHaveAttribute('tabindex', '0');
+    });
+
+    it('should not have button role when onclick is not provided', () => {
+      render(BottleCard, { props: { bottle: makeBottle() } });
+
+      const card = screen.getByTestId('bottle-card');
+      expect(card).not.toHaveAttribute('role');
+    });
   });
 });

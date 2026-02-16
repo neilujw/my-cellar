@@ -78,13 +78,13 @@ Updated at 2026-02-16
 - [x] Extract existing values from current bottles to populate suggestion lists
 - [x] Allow free-text entry for new values while suggesting existing ones
 
-## Step 13: Update Bottle Rating & Notes
-- [ ] Create edit bottle view/modal for updating rating and notes
-- [ ] Add edit action button on bottle detail view
-- [ ] Add edit action from dashboard and search results
-- [ ] Implement form validation and save functionality
-- [ ] Handle uniqueness constraint: prevent editing name/vintage/type (key fields) or validate for duplicates if allowed
-- [ ] Update sync to push changes to GitHub
+## Step 13: Update Bottle Rating & Notes ✅
+- [x] Create bottle detail view (full-page modal) with all fields and history timeline
+- [x] Create edit bottle modal with key fields disabled and non-key fields editable
+- [x] Add detail/edit action from dashboard (recent bottles) and search results
+- [x] Implement form validation (rating 1-10, optional) and save functionality
+- [x] Key fields (name, vintage, type) are visible but disabled — no duplicate re-validation needed
+- [x] Update sync to push changes to GitHub via attemptSync()
 
 ## Step 14: Quick Consume/Remove Actions
 - [ ] Add consume action button to bottle cards in dashboard view
