@@ -81,7 +81,7 @@
     conflict: { label: 'Conflict', color: 'text-orange-500' },
   };
 
-  let syncStatusLabel = $derived(() => {
+  let syncStatusLabel = $derived.by(() => {
     const base = syncStatusConfig[syncStatus].label;
     if ((syncStatus === 'offline' || syncStatus === 'error') && pendingCount > 0) {
       return `${base} (${pendingCount} pending)`;
@@ -103,7 +103,7 @@
 <div class="flex h-full flex-col">
   <header class="flex items-center justify-between border-b border-gray-200 bg-white px-4 py-3">
     <h1 class="text-lg font-bold">My Cellar</h1>
-    <span class="text-sm {syncStatusConfig[syncStatus].color}" data-testid="sync-status">{syncStatusLabel()}</span>
+    <span class="text-sm {syncStatusConfig[syncStatus].color}" data-testid="sync-status">{syncStatusLabel}</span>
   </header>
 
   <main class="flex-1 overflow-y-auto">

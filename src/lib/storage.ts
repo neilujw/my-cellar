@@ -44,6 +44,9 @@ function getDb(): Promise<IDBPDatabase<MyCellarDB>> {
           db.createObjectStore(SYNC_QUEUE_STORE, { keyPath: 'id', autoIncrement: true });
         }
       },
+    }).catch((error) => {
+      dbPromise = null;
+      throw error;
     });
   }
   return dbPromise;

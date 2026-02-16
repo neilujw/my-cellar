@@ -382,6 +382,28 @@ describe("AddBottle", () => {
         screen.queryByTestId("existing-bottle-banner"),
       ).not.toBeInTheDocument();
     });
+
+    it("should detect duplicate when typing name, vintage, and type matching an existing bottle without autocomplete", async () => {
+      const existing = makeBottle();
+      vi.spyOn(storage, "getAllBottles").mockResolvedValue([existing]);
+      render(AddBottle);
+      const user = userEvent.setup();
+
+      // Wait for bottles to load
+      await vi.waitFor(() => {
+        expect(storage.getAllBottles).toHaveBeenCalled();
+      });
+
+      // Manually type all key fields matching an existing bottle (no autocomplete selection)
+      await user.type(screen.getByTestId("input-vintage"), "2015");
+      await user.selectOptions(screen.getByTestId("input-type"), WineType.Red);
+      await user.type(screen.getByTestId("input-name"), "Chateau Margaux");
+
+      expect(screen.getByTestId("existing-bottle-banner")).toBeInTheDocument();
+      expect(screen.getByTestId("existing-bottle-banner")).toHaveTextContent(
+        "Chateau Margaux",
+      );
+    });
   });
 
   describe("grape variety tag input", () => {

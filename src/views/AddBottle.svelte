@@ -46,9 +46,7 @@
   /** Update a key field and re-run duplicate detection. */
   function setKeyField(field: 'name' | 'vintage' | 'type', value: string): void {
     form = { ...form, [field]: value };
-    if (selectedBottle) {
-      redetectDuplicate({ ...form, [field]: value });
-    }
+    redetectDuplicate({ ...form, [field]: value });
   }
 
   /** Auto-fill form fields from a selected bottle. */

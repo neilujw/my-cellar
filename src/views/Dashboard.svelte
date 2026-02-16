@@ -23,12 +23,20 @@
 
   /** Load bottles from IndexedDB on mount. */
   function loadBottles(): void {
-    getAllBottles().then((data) => {
-      bottles = data;
-      loaded = true;
-    });
+    getAllBottles()
+      .then((data) => {
+        bottles = data;
+      })
+      .catch(() => {
+        bottles = [];
+      })
+      .finally(() => {
+        loaded = true;
+      });
   }
-  $effect(loadBottles);
+  $effect(() => {
+    loadBottles();
+  });
 
   const totalCount = $derived(getTotalBottleCount(bottles));
   const statsByType = $derived(getStatsByType(bottles));
