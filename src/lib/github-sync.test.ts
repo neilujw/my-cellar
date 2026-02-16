@@ -432,7 +432,7 @@ describe('pullFromGitHub', () => {
     }
   });
 
-  it('should skip invalid wine files', async () => {
+  it('should report errors for invalid wine files while keeping valid ones', async () => {
     const validBottle = makeBottle();
     const validContent = utf8ToBase64(serializeBottle(validBottle));
 
@@ -464,8 +464,36 @@ describe('pullFromGitHub', () => {
 
     const result = await pullFromGitHub(client, 'owner/repo');
 
-    expect(result.status).toBe('success');
+    expect(result.status).toBe('error');
     expect(result.bottles).toHaveLength(1);
+    expect(result.message).toContain('1 file skipped');
+    expect(result.message).toContain('wines/red/wine-invalid.json');
+  });
+
+  it('should return error when all files fail to parse', async () => {
+    const client = createMockClient({
+      treeData: {
+        tree: [
+          {
+            path: 'wines/red/wine-bad.json',
+            mode: '100644',
+            type: 'blob',
+            sha: 'bad-sha',
+          },
+        ],
+        sha: 'tree-sha-1',
+      },
+      getBlob: vi.fn().mockResolvedValue({
+        data: { content: utf8ToBase64('not json'), encoding: 'base64' },
+      }),
+    });
+
+    const result = await pullFromGitHub(client, 'owner/repo');
+
+    expect(result.status).toBe('error');
+    expect(result.bottles).toBeUndefined();
+    expect(result.message).toContain('all 1 file failed to parse');
+    expect(result.message).toContain('wines/red/wine-bad.json: Invalid JSON');
   });
 
   it('should return commitSha on successful pull', async () => {

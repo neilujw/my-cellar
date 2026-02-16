@@ -391,6 +391,7 @@ export async function pullFromGitHub(
 
     // Fetch blob contents in batches
     const bottles: Bottle[] = [];
+    const errors: string[] = [];
     for (let i = 0; i < wineEntries.length; i += PULL_BATCH_SIZE) {
       const batch = wineEntries.slice(i, i + PULL_BATCH_SIZE);
       const blobPromises = batch.map(async (entry) => {
@@ -406,17 +407,31 @@ export async function pullFromGitHub(
           bytes[i] = binary.charCodeAt(i);
         }
         const content = new TextDecoder().decode(bytes);
-        const bottle = deserializeBottle(content);
-        if (bottle) {
-          bottles.push(bottle);
+        try {
+          bottles.push(deserializeBottle(content));
+        } catch (error) {
+          const reason = error instanceof Error ? error.message : 'Unknown error';
+          errors.push(`${entry.path}: ${reason}`);
         }
       });
       await Promise.all(blobPromises);
     }
 
+    if (errors.length > 0 && bottles.length === 0) {
+      return {
+        status: 'error',
+        message: `Pull failed: all ${errors.length} file${errors.length !== 1 ? 's' : ''} failed to parse.\n${errors.join('\n')}`,
+      };
+    }
+
+    let message = `Pulled ${bottles.length} bottle${bottles.length !== 1 ? 's' : ''} from GitHub.`;
+    if (errors.length > 0) {
+      message += ` ${errors.length} file${errors.length !== 1 ? 's' : ''} skipped:\n${errors.join('\n')}`;
+    }
+
     return {
-      status: 'success',
-      message: `Pulled ${bottles.length} bottle${bottles.length !== 1 ? 's' : ''} from GitHub.`,
+      status: errors.length > 0 ? 'error' : 'success',
+      message,
       bottles,
       commitSha: headSha,
     };

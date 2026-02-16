@@ -130,34 +130,34 @@ describe('deserializeBottle', () => {
     expect(result).toEqual(bottle);
   });
 
-  it('should return null for invalid JSON', () => {
-    expect(deserializeBottle('not json')).toBeNull();
+  it('should throw for invalid JSON', () => {
+    expect(() => deserializeBottle('not json')).toThrow('Invalid JSON');
   });
 
-  it('should return null when required fields are missing', () => {
-    expect(deserializeBottle(JSON.stringify({ id: 'x' }))).toBeNull();
+  it('should throw when required fields are missing', () => {
+    expect(() => deserializeBottle(JSON.stringify({ id: 'x' }))).toThrow('Missing or invalid "name"');
   });
 
-  it('should return null for invalid wine type', () => {
+  it('should throw for invalid wine type', () => {
     const bottle = makeBottle();
     const json = serializeBottle(bottle).replace('"red"', '"purple"');
-    expect(deserializeBottle(json)).toBeNull();
+    expect(() => deserializeBottle(json)).toThrow('Invalid wine type: "purple"');
   });
 
-  it('should return null for invalid history action', () => {
+  it('should throw for invalid history action', () => {
     const bottle = makeBottle();
     const json = serializeBottle(bottle).replace('"added"', '"stolen"');
-    expect(deserializeBottle(json)).toBeNull();
+    expect(() => deserializeBottle(json)).toThrow('Invalid action: "stolen"');
   });
 
-  it('should return null when grapeVariety is not an array', () => {
+  it('should throw when grapeVariety is not an array', () => {
     const data = { ...makeBottle(), grapeVariety: 'Merlot' };
-    expect(deserializeBottle(JSON.stringify(data))).toBeNull();
+    expect(() => deserializeBottle(JSON.stringify(data))).toThrow('Missing or invalid "grapeVariety"');
   });
 
-  it('should return null when vintage is not an integer', () => {
+  it('should throw when vintage is not an integer', () => {
     const data = { ...makeBottle(), vintage: 2015.5 };
-    expect(deserializeBottle(JSON.stringify(data))).toBeNull();
+    expect(() => deserializeBottle(JSON.stringify(data))).toThrow('Missing or invalid "vintage"');
   });
 
   it('should accept bottle with all optional fields', () => {
@@ -187,12 +187,12 @@ describe('deserializeBottle', () => {
     expect(deserializeBottle(json)).toEqual(bottle);
   });
 
-  it('should return null for empty string', () => {
-    expect(deserializeBottle('')).toBeNull();
+  it('should throw for empty string', () => {
+    expect(() => deserializeBottle('')).toThrow('Invalid JSON');
   });
 
-  it('should return null when name is empty', () => {
+  it('should throw when name is empty', () => {
     const data = { ...makeBottle(), name: '' };
-    expect(deserializeBottle(JSON.stringify(data))).toBeNull();
+    expect(() => deserializeBottle(JSON.stringify(data))).toThrow('Missing or invalid "name"');
   });
 });

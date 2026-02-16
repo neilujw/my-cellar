@@ -142,7 +142,7 @@ describe('SyncSection', () => {
     });
 
     it('should clear sync queue and cancel retries on successful pull', async () => {
-      mockedPull.mockResolvedValue({ status: 'success', message: 'Done', bottles: [] });
+      mockedPull.mockResolvedValue({ status: 'success', message: 'Done', bottles: [{ id: '1', name: 'W', vintage: 2020, type: 'red', country: 'FR', grapeVariety: [], history: [] }] });
       render(SyncSection);
       const user = userEvent.setup();
 
@@ -216,7 +216,7 @@ describe('SyncSection', () => {
       mockedPull.mockResolvedValue({
         status: 'success',
         message: 'Pulled 2 bottles',
-        bottles: [],
+        bottles: [{ id: '1', name: 'W', vintage: 2020, type: 'red', country: 'FR', grapeVariety: [], history: [] }],
         commitSha: 'pull-sha-456',
       });
       render(SyncSection);

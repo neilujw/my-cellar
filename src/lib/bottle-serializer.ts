@@ -85,62 +85,73 @@ const VALID_HISTORY_ACTIONS = new Set<string>(Object.values(HistoryAction));
 
 /**
  * Deserializes a JSON string into a validated Bottle object.
- * Returns `null` if the JSON is invalid or does not conform to the Bottle schema.
+ * Throws an error with a descriptive message if the JSON is invalid
+ * or does not conform to the Bottle schema.
  */
-export function deserializeBottle(json: string): Bottle | null {
+export function deserializeBottle(json: string): Bottle {
+  let data: unknown;
   try {
-    const data: unknown = JSON.parse(json);
-    if (!isValidBottle(data)) return null;
-    return data;
+    data = JSON.parse(json);
   } catch {
-    return null;
+    throw new Error('Invalid JSON');
   }
+  const error = validateBottleData(data);
+  if (error) {
+    throw new Error(error);
+  }
+  return data as Bottle;
 }
 
-/** Type guard that validates an unknown value conforms to the Bottle interface. */
-function isValidBottle(data: unknown): data is Bottle {
-  if (typeof data !== 'object' || data === null) return false;
+/**
+ * Validates unknown data against the Bottle schema.
+ * Returns an error message string if invalid, or null if valid.
+ */
+function validateBottleData(data: unknown): string | null {
+  if (typeof data !== 'object' || data === null) return 'Expected an object';
 
   const obj = data as Record<string, unknown>;
 
-  if (typeof obj.id !== 'string' || obj.id === '') return false;
-  if (typeof obj.name !== 'string' || obj.name === '') return false;
-  if (typeof obj.vintage !== 'number' || !Number.isInteger(obj.vintage)) return false;
-  if (typeof obj.type !== 'string' || !VALID_WINE_TYPES.has(obj.type)) return false;
-  if (typeof obj.country !== 'string') return false;
-  if (obj.region !== undefined && typeof obj.region !== 'string') return false;
+  if (typeof obj.id !== 'string' || obj.id === '') return 'Missing or invalid "id"';
+  if (typeof obj.name !== 'string' || obj.name === '') return 'Missing or invalid "name"';
+  if (typeof obj.vintage !== 'number' || !Number.isInteger(obj.vintage)) return 'Missing or invalid "vintage"';
+  if (typeof obj.type !== 'string' || !VALID_WINE_TYPES.has(obj.type)) return `Invalid wine type: "${String(obj.type)}"`;
+  if (typeof obj.country !== 'string') return 'Missing or invalid "country"';
+  if (obj.region !== undefined && typeof obj.region !== 'string') return 'Invalid "region": expected string';
 
-  if (!Array.isArray(obj.grapeVariety)) return false;
-  if (!obj.grapeVariety.every((g: unknown) => typeof g === 'string')) return false;
+  if (!Array.isArray(obj.grapeVariety)) return 'Missing or invalid "grapeVariety"';
+  if (!obj.grapeVariety.every((g: unknown) => typeof g === 'string')) return '"grapeVariety" must contain only strings';
 
-  if (obj.location !== undefined && typeof obj.location !== 'string') return false;
-  if (obj.rating !== undefined && typeof obj.rating !== 'number') return false;
-  if (obj.notes !== undefined && typeof obj.notes !== 'string') return false;
+  if (obj.location !== undefined && typeof obj.location !== 'string') return 'Invalid "location": expected string';
+  if (obj.rating !== undefined && typeof obj.rating !== 'number') return 'Invalid "rating": expected number';
+  if (obj.notes !== undefined && typeof obj.notes !== 'string') return 'Invalid "notes": expected string';
 
-  if (!Array.isArray(obj.history)) return false;
-  if (!obj.history.every(isValidHistoryEntry)) return false;
+  if (!Array.isArray(obj.history)) return 'Missing or invalid "history"';
+  for (let i = 0; i < obj.history.length; i++) {
+    const entryError = validateHistoryEntry(obj.history[i]);
+    if (entryError) return `history[${i}]: ${entryError}`;
+  }
 
-  return true;
+  return null;
 }
 
-/** Validates a single history entry. */
-function isValidHistoryEntry(entry: unknown): entry is HistoryEntry {
-  if (typeof entry !== 'object' || entry === null) return false;
+/** Validates a single history entry. Returns an error message or null. */
+function validateHistoryEntry(entry: unknown): string | null {
+  if (typeof entry !== 'object' || entry === null) return 'Expected an object';
 
   const obj = entry as Record<string, unknown>;
 
-  if (typeof obj.date !== 'string') return false;
-  if (typeof obj.action !== 'string' || !VALID_HISTORY_ACTIONS.has(obj.action)) return false;
-  if (typeof obj.quantity !== 'number' || !Number.isInteger(obj.quantity)) return false;
+  if (typeof obj.date !== 'string') return 'Missing or invalid "date"';
+  if (typeof obj.action !== 'string' || !VALID_HISTORY_ACTIONS.has(obj.action)) return `Invalid action: "${String(obj.action)}"`;
+  if (typeof obj.quantity !== 'number' || !Number.isInteger(obj.quantity)) return 'Missing or invalid "quantity"';
 
   if (obj.price !== undefined) {
-    if (typeof obj.price !== 'object' || obj.price === null) return false;
+    if (typeof obj.price !== 'object' || obj.price === null) return 'Invalid "price": expected object';
     const price = obj.price as Record<string, unknown>;
-    if (typeof price.amount !== 'number') return false;
-    if (typeof price.currency !== 'string') return false;
+    if (typeof price.amount !== 'number') return 'Invalid "price.amount": expected number';
+    if (typeof price.currency !== 'string') return 'Invalid "price.currency": expected string';
   }
 
-  if (obj.notes !== undefined && typeof obj.notes !== 'string') return false;
+  if (obj.notes !== undefined && typeof obj.notes !== 'string') return 'Invalid "notes": expected string';
 
-  return true;
+  return null;
 }

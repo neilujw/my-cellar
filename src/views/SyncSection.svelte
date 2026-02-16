@@ -76,7 +76,7 @@
       const client = createGitHubClient(settings.pat);
       const pullResult = await pullFromGitHub(client, settings.repo);
 
-      if (pullResult.status === 'success' && pullResult.bottles) {
+      if (pullResult.bottles && pullResult.bottles.length > 0) {
         await clearAll();
         for (const bottle of pullResult.bottles) {
           await addBottle(bottle);
@@ -86,10 +86,13 @@
         }
         cancelRetries();
         await clearSyncQueue();
+      }
+
+      if (pullResult.status === 'success') {
         dispatchSyncStatus('connected');
         toastSuccess('Pull completed successfully');
       } else {
-        dispatchSyncStatus('offline');
+        dispatchSyncStatus(pullResult.bottles?.length ? 'connected' : 'offline');
         toastError(pullResult.message);
       }
 
