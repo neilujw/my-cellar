@@ -59,10 +59,10 @@ describe('validateForm', () => {
     expect(errors.country).toBe('Country is required');
   });
 
-  it('should require region', () => {
+  it('should allow empty region', () => {
     const errors = validateForm(validFormData({ region: '' }));
 
-    expect(errors.region).toBe('Region is required');
+    expect(errors.region).toBeUndefined();
   });
 
   it('should require quantity >= 1', () => {
@@ -99,7 +99,7 @@ describe('validateForm', () => {
   it('should return multiple errors at once', () => {
     const errors = validateForm(createEmptyFormData());
 
-    expect(Object.keys(errors).length).toBeGreaterThanOrEqual(5);
+    expect(Object.keys(errors).length).toBeGreaterThanOrEqual(4);
   });
 });
 

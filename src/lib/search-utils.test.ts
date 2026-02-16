@@ -385,6 +385,18 @@ describe('getUniqueRegions', () => {
   it('should return empty array for no bottles', () => {
     expect(getUniqueRegions([])).toEqual([]);
   });
+
+  it('should filter out undefined regions', () => {
+    const bottles = [
+      makeBottle({ id: '1', region: 'Bordeaux' }),
+      makeBottle({ id: '2', region: undefined }),
+      makeBottle({ id: '3', region: 'Tuscany' }),
+    ];
+
+    const result = getUniqueRegions(bottles);
+
+    expect(result).toEqual(['Bordeaux', 'Tuscany']);
+  });
 });
 
 describe('countActiveFilters', () => {

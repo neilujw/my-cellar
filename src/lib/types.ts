@@ -74,7 +74,7 @@ export interface Bottle {
   readonly vintage: number;
   readonly type: WineType;
   readonly country: string;
-  readonly region: string;
+  readonly region?: string;
   readonly grapeVariety: readonly string[];
   readonly location?: string;
   readonly rating?: number;

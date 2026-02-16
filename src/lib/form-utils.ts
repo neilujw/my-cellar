@@ -75,10 +75,6 @@ export function validateForm(data: FormData): FormErrors {
     errors.country = 'Country is required';
   }
 
-  if (!data.region.trim()) {
-    errors.region = 'Region is required';
-  }
-
   const quantity = Number(data.quantity);
   if (!Number.isInteger(quantity) || quantity < 1) {
     errors.quantity = 'Quantity must be at least 1';
@@ -114,7 +110,7 @@ export function createBottleFromForm(data: FormData): Bottle {
     vintage: Number(data.vintage),
     type: data.type as WineType,
     country: data.country.trim(),
-    region: data.region.trim(),
+    ...(data.region.trim() && { region: data.region.trim() }),
     grapeVariety: [...data.grapeVariety],
     ...(data.location.trim() && { location: data.location.trim() }),
     ...(data.rating.trim() && { rating: Number(data.rating) }),

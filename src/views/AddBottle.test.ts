@@ -104,7 +104,6 @@ describe("AddBottle", () => {
       expect(screen.getByTestId("error-vintage")).toBeInTheDocument();
       expect(screen.getByTestId("error-type")).toBeInTheDocument();
       expect(screen.getByTestId("error-country")).toBeInTheDocument();
-      expect(screen.getByTestId("error-region")).toBeInTheDocument();
       expect(screen.getByTestId("error-quantity")).toBeInTheDocument();
     });
 

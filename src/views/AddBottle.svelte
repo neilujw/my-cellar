@@ -175,7 +175,7 @@
           value={form.region}
           suggestions={getUniqueRegions(allBottles)}
           oninput={(v) => set('region', v)}
-          label="Region *"
+          label="Region"
           id="region"
           error={errors.region}
           errorTestId="error-region"

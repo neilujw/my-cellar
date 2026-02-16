@@ -163,6 +163,6 @@ export function parseOptionalNumber(value: string): number | undefined {
 
 /** Extracts sorted unique region values from all bottles. */
 export function getUniqueRegions(bottles: readonly Bottle[]): string[] {
-  const regions = new Set(bottles.map((b) => b.region));
+  const regions = new Set(bottles.map((b) => b.region).filter((r): r is string => r !== undefined));
   return Array.from(regions).sort((a, b) => a.localeCompare(b));
 }
