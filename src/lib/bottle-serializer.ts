@@ -108,7 +108,7 @@ function isValidBottle(data: unknown): data is Bottle {
   if (typeof obj.vintage !== 'number' || !Number.isInteger(obj.vintage)) return false;
   if (typeof obj.type !== 'string' || !VALID_WINE_TYPES.has(obj.type)) return false;
   if (typeof obj.country !== 'string') return false;
-  if (typeof obj.region !== 'string') return false;
+  if (obj.region !== undefined && typeof obj.region !== 'string') return false;
 
   if (!Array.isArray(obj.grapeVariety)) return false;
   if (!obj.grapeVariety.every((g: unknown) => typeof g === 'string')) return false;

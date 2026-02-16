@@ -172,6 +172,13 @@ describe('deserializeBottle', () => {
     expect(deserializeBottle(json)).toEqual(bottle);
   });
 
+  it('should accept bottle without region', () => {
+    const { region, ...rest } = makeBottle();
+    const bottle = rest as Bottle;
+    const json = serializeBottle(bottle);
+    expect(deserializeBottle(json)).toEqual(bottle);
+  });
+
   it('should accept history entry without price and notes', () => {
     const bottle = makeBottle({
       history: [{ date: '2024-01-15', action: HistoryAction.Consumed, quantity: 1 }],
