@@ -13,6 +13,7 @@ import type { SyncStatus } from './types';
 
 let retryAttempt = 0;
 let retryTimer: ReturnType<typeof setTimeout> | null = null;
+let syncing = false;
 
 /** Replaceable timer function for testability. */
 let scheduleFn: typeof setTimeout = setTimeout;
@@ -37,10 +38,12 @@ function dispatchSyncStatus(status: SyncStatus, pendingCount: number): void {
  * On failure, adds the action to the sync queue and schedules a retry.
  * On conflict, dispatches conflict status and stops (no retry).
  */
-export async function attemptSync(actionDescription: string): Promise<void> {
+export async function attemptSync(actionDescription: string): Promise<SyncStatus | null> {
   const settings = loadSettings();
-  if (!settings) return;
+  if (!settings) return null;
+  if (syncing) return null;
 
+  syncing = true;
   try {
     dispatchSyncStatus('syncing', await getSyncQueueCount());
 
@@ -56,8 +59,10 @@ export async function attemptSync(actionDescription: string): Promise<void> {
         setLastSyncedCommitSha(result.commitSha);
       }
       dispatchSyncStatus('connected', 0);
+      return 'connected';
     } else if (result.status === 'conflict') {
       dispatchSyncStatus('conflict', 0);
+      return 'conflict';
     } else {
       await addToSyncQueue({
         timestamp: new Date().toISOString(),
@@ -66,6 +71,7 @@ export async function attemptSync(actionDescription: string): Promise<void> {
       const pendingCount = await getSyncQueueCount();
       dispatchSyncStatus('offline', pendingCount);
       scheduleRetry();
+      return 'offline';
     }
   } catch {
     await addToSyncQueue({
@@ -74,6 +80,9 @@ export async function attemptSync(actionDescription: string): Promise<void> {
     });
     const pendingCount = await getSyncQueueCount();
     dispatchSyncStatus('error', pendingCount);
+    return 'error';
+  } finally {
+    syncing = false;
   }
 }
 
@@ -107,10 +116,12 @@ async function handleMaxRetriesExhausted(): Promise<void> {
 export async function processQueue(): Promise<void> {
   const settings = loadSettings();
   if (!settings) return;
+  if (syncing) return;
 
   const queue = await getSyncQueue();
   if (queue.length === 0) return;
 
+  syncing = true;
   try {
     const pendingCount = await getSyncQueueCount();
     dispatchSyncStatus('syncing', pendingCount);
@@ -136,6 +147,8 @@ export async function processQueue(): Promise<void> {
   } catch {
     const pendingCount = await getSyncQueueCount();
     dispatchSyncStatus('error', pendingCount);
+  } finally {
+    syncing = false;
   }
 }
 
@@ -158,9 +171,15 @@ export function setScheduleFn(fn: typeof setTimeout): void {
   scheduleFn = fn;
 }
 
+/** Returns whether a sync operation is currently in progress. Exposed for testing. */
+export function isSyncing(): boolean {
+  return syncing;
+}
+
 /** Resets internal state. Only intended for use in tests. */
 export function resetSyncManagerState(): void {
   cancelRetries();
   retryAttempt = 0;
+  syncing = false;
   scheduleFn = setTimeout;
 }

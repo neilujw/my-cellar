@@ -4,7 +4,7 @@ import { render, screen, cleanup } from "@testing-library/svelte";
 import { userEvent } from "@testing-library/user-event";
 
 vi.mock("../lib/sync-manager", () => ({
-  attemptSync: vi.fn(),
+  attemptSync: vi.fn().mockResolvedValue("connected"),
 }));
 
 import AddBottle from "./AddBottle.svelte";
@@ -531,6 +531,61 @@ describe("AddBottle", () => {
 
       expect(screen.getByTestId("input-country")).toBeDisabled();
       expect(screen.getByTestId("input-region")).toBeDisabled();
+    });
+  });
+
+  describe("conflict handling", () => {
+    it("should stay on form when attemptSync returns conflict", async () => {
+      vi.spyOn(storage, "getAllBottles").mockResolvedValue([]);
+      vi.spyOn(storage, "addBottle").mockResolvedValue("new-id");
+      mockedAttemptSync.mockResolvedValue("conflict");
+      window.location.hash = "#/add";
+      render(AddBottle);
+      const user = userEvent.setup();
+
+      await fillNewBottleFields(user);
+      await user.click(screen.getByTestId("submit-button"));
+
+      // Should NOT navigate — still on add form
+      expect(window.location.hash).toBe("#/add");
+      expect(screen.getByTestId("add-bottle-form")).toBeInTheDocument();
+    });
+
+    it("should navigate to dashboard when attemptSync returns connected", async () => {
+      vi.spyOn(storage, "getAllBottles").mockResolvedValue([]);
+      vi.spyOn(storage, "addBottle").mockResolvedValue("new-id");
+      mockedAttemptSync.mockResolvedValue("connected");
+      render(AddBottle);
+      const user = userEvent.setup();
+
+      await fillNewBottleFields(user);
+      await user.click(screen.getByTestId("submit-button"));
+
+      expect(window.location.hash).toBe("#/");
+    });
+
+    it("should refresh allBottles and re-detect duplicate on conflict-resolved event", async () => {
+      const existing = makeBottle();
+      const getAllSpy = vi.spyOn(storage, "getAllBottles").mockResolvedValue([]);
+      render(AddBottle);
+      const user = userEvent.setup();
+
+      // Fill in fields matching the existing bottle
+      await user.type(screen.getByTestId("input-name"), "Chateau Margaux");
+      await user.type(screen.getByTestId("input-vintage"), "2015");
+      await user.selectOptions(screen.getByTestId("input-type"), WineType.Red);
+
+      // No duplicate detected yet (allBottles is empty)
+      expect(screen.queryByTestId("existing-bottle-banner")).not.toBeInTheDocument();
+
+      // Simulate conflict resolution bringing in remote data
+      getAllSpy.mockResolvedValue([existing]);
+      window.dispatchEvent(new CustomEvent("conflict-resolved"));
+
+      // Wait for the async re-fetch
+      await vi.waitFor(() => {
+        expect(screen.getByTestId("existing-bottle-banner")).toBeInTheDocument();
+      });
     });
   });
 

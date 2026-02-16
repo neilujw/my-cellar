@@ -5,12 +5,13 @@
    * When an existing bottle is selected, non-key fields become read-only
    * and submission adds a history entry instead of creating a new bottle.
    */
+  import { onMount } from 'svelte';
   import { WineType, type Bottle } from '../lib/types';
   import { navigate } from '../lib/router.svelte';
   import { addBottle, getAllBottles, updateBottle } from '../lib/storage';
   import { calculateQuantity, findDuplicate } from '../lib/bottle-utils';
   import { attemptSync } from '../lib/sync-manager';
-  import { toastSuccess, toastError } from '../lib/toast.svelte';
+  import { toastSuccess, toastError, toastInfo } from '../lib/toast.svelte';
   import {
     createBottleFromForm,
     createEmptyFormData,
@@ -29,6 +30,7 @@
   let errors = $state<FormErrors>({});
   let allBottles = $state<Bottle[]>([]);
   let selectedBottle = $state<Bottle | null>(null);
+  let submitting = $state(false);
 
   const typeLabels: Record<WineType, string> = {
     [WineType.Red]: 'Red', [WineType.White]: 'White',
@@ -100,26 +102,53 @@
     errors = validateForm(form);
     if (Object.keys(errors).length > 0) return;
 
+    submitting = true;
     try {
+      let syncDescription: string;
+
       if (selectedBottle) {
         const entry = createHistoryEntryFromForm(form);
         await updateBottle({ ...selectedBottle, grapeVariety: [...selectedBottle.grapeVariety], history: [...selectedBottle.history, entry] });
-        attemptSync(`Updated bottle: ${selectedBottle.name} ${selectedBottle.vintage}`);
-        toastSuccess(`Updated ${selectedBottle.name} ${selectedBottle.vintage}`);
-        navigate('/');
+        syncDescription = `Updated bottle: ${selectedBottle.name} ${selectedBottle.vintage}`;
+      } else {
+        const bottle = createBottleFromForm(form);
+        await addBottle(bottle);
+        syncDescription = `Added bottle: ${form.name} ${form.vintage}`;
+      }
+
+      const status = await attemptSync(syncDescription);
+
+      if (status === 'conflict') {
+        toastInfo('Sync conflict — resolve before continuing');
         return;
       }
 
-      const bottle = createBottleFromForm(form);
-      await addBottle(bottle);
-      attemptSync(`Added bottle: ${form.name} ${form.vintage}`);
-      toastSuccess(`Added ${form.name} ${form.vintage}`);
+      toastSuccess(selectedBottle
+        ? `Updated ${selectedBottle.name} ${selectedBottle.vintage}`
+        : `Added ${form.name} ${form.vintage}`);
       navigate('/');
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to save bottle';
       toastError(message);
+    } finally {
+      submitting = false;
     }
   }
+
+  /** Re-fetch bottles after conflict resolution to pick up remote data. */
+  function handleConflictResolved(): void {
+    getAllBottles().then((bottles) => {
+      allBottles = bottles;
+      redetectDuplicate(form);
+    });
+  }
+
+  onMount(() => {
+    window.addEventListener('conflict-resolved', handleConflictResolved);
+    return () => {
+      window.removeEventListener('conflict-resolved', handleConflictResolved);
+    };
+  });
 </script>
 
 <div class="p-4">
@@ -224,6 +253,8 @@
       </FormField>
     </fieldset>
 
-    <button type="submit" class="w-full rounded-lg bg-indigo-600 px-6 py-3 font-semibold text-white transition-colors hover:bg-indigo-700" data-testid="submit-button">Add Bottle</button>
+    <button type="submit" class="w-full rounded-lg bg-indigo-600 px-6 py-3 font-semibold text-white transition-colors hover:bg-indigo-700 disabled:opacity-50" disabled={submitting} data-testid="submit-button">
+      {#if submitting}Syncing...{:else}Add Bottle{/if}
+    </button>
   </form>
 </div>

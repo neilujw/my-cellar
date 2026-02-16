@@ -33,7 +33,7 @@ describe('EditBottle', () => {
     storage.resetDbConnection();
     vi.spyOn(storage, 'getAllBottles').mockResolvedValue([]);
     vi.spyOn(storage, 'updateBottle').mockResolvedValue();
-    vi.spyOn(syncManager, 'attemptSync').mockImplementation(() => Promise.resolve());
+    vi.spyOn(syncManager, 'attemptSync').mockResolvedValue('connected');
     vi.spyOn(toast, 'toastSuccess').mockReturnValue(1);
     vi.spyOn(toast, 'toastError').mockReturnValue(1);
   });

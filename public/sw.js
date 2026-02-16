@@ -39,6 +39,16 @@ self.addEventListener('fetch', (event) => {
   // Only handle same-origin requests
   if (url.origin !== self.location.origin) return;
 
+  // Network-first for navigation requests (must be checked before static assets)
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request).catch(() =>
+        caches.match('/my-cellar/index.html').then((cached) => cached || new Response('Offline')),
+      ),
+    );
+    return;
+  }
+
   // Cache-first for static assets
   if (isStaticAsset(url.pathname)) {
     event.respondWith(
@@ -55,20 +65,10 @@ self.addEventListener('fetch', (event) => {
         });
       }),
     );
-    return;
-  }
-
-  // Network-first for navigation and dynamic requests
-  if (event.request.mode === 'navigate') {
-    event.respondWith(
-      fetch(event.request).catch(() =>
-        caches.match('/my-cellar/index.html').then((cached) => cached || new Response('Offline')),
-      ),
-    );
   }
 });
 
 /** Checks if a URL path refers to a static asset that should be cached. */
 function isStaticAsset(pathname) {
-  return /\.(js|css|html|png|svg|ico|woff2?|ttf)$/.test(pathname) || pathname === '/my-cellar/';
+  return /\.(js|css|html|png|svg|ico|woff2?|ttf)$/.test(pathname);
 }

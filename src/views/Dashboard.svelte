@@ -3,6 +3,7 @@
    * Dashboard view — overview of cellar with inventory, statistics, and recent activity.
    * Shows an empty state with CTA when no bottles exist.
    */
+  import { onMount } from 'svelte';
   import { getAllBottles } from '../lib/storage';
   import { navigate } from '../lib/router.svelte.ts';
   import { WineType, type Bottle } from '../lib/types';
@@ -34,9 +35,7 @@
         loaded = true;
       });
   }
-  $effect(() => {
-    loadBottles();
-  });
+  onMount(loadBottles);
 
   const totalCount = $derived(getTotalBottleCount(bottles));
   const statsByType = $derived(getStatsByType(bottles));

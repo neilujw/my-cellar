@@ -7,6 +7,7 @@ import {
   cancelRetries,
   calculateBackoffDelay,
   getRetryAttempt,
+  isSyncing,
   resetSyncManagerState,
   setScheduleFn,
 } from './sync-manager';
@@ -127,9 +128,10 @@ describe('sync-manager', () => {
     it('should do nothing when settings are not configured', async () => {
       mockedLoadSettings.mockReturnValue(null);
 
-      await attemptSync('Added bottle');
+      const result = await attemptSync('Added bottle');
 
       expect(mockedPush).not.toHaveBeenCalled();
+      expect(result).toBeNull();
     });
 
     it('should schedule a retry on failure', async () => {
@@ -352,6 +354,96 @@ describe('sync-manager', () => {
         expect.anything(),
         'stored-sha-789',
       );
+    });
+  });
+
+  describe('attemptSync return values', () => {
+    it('should return connected on success', async () => {
+      mockedPush.mockResolvedValue({ status: 'success', message: 'Done' });
+
+      const result = await attemptSync('Added bottle');
+
+      expect(result).toBe('connected');
+    });
+
+    it('should return conflict on conflict', async () => {
+      mockedPush.mockResolvedValue({ status: 'conflict', message: 'Remote has changed' });
+
+      const result = await attemptSync('Added bottle');
+
+      expect(result).toBe('conflict');
+    });
+
+    it('should return offline on push failure', async () => {
+      mockedPush.mockResolvedValue({ status: 'error', message: 'Network error' });
+
+      const result = await attemptSync('Added bottle');
+
+      expect(result).toBe('offline');
+    });
+
+    it('should return error on exception', async () => {
+      mockedPush.mockRejectedValue(new Error('Network failure'));
+
+      const result = await attemptSync('Added bottle');
+
+      expect(result).toBe('error');
+    });
+  });
+
+  describe('sync lock', () => {
+    /** Yield multiple microtask ticks for IndexedDB async operations. */
+    async function flushAsync(): Promise<void> {
+      for (let i = 0; i < 10; i++) {
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      }
+    }
+
+    it('should skip attemptSync when another sync is in flight', async () => {
+      let resolveFirst!: (value: { status: 'success'; message: string }) => void;
+      mockedPush.mockImplementation(
+        () => new Promise((resolve) => { resolveFirst = resolve; }),
+      );
+
+      const first = attemptSync('First');
+      await flushAsync();
+      expect(isSyncing()).toBe(true);
+
+      const second = await attemptSync('Second');
+      expect(second).toBeNull();
+      expect(mockedPush).toHaveBeenCalledTimes(1);
+
+      resolveFirst({ status: 'success', message: 'Done' });
+      await first;
+      expect(isSyncing()).toBe(false);
+    });
+
+    it('should skip processQueue when attemptSync is in flight', async () => {
+      await addToSyncQueue({ timestamp: '2026-01-01T00:00:00Z', action: 'queued' });
+      let resolveFirst!: (value: { status: 'success'; message: string }) => void;
+      mockedPush.mockImplementation(
+        () => new Promise((resolve) => { resolveFirst = resolve; }),
+      );
+
+      const first = attemptSync('First');
+      await flushAsync();
+
+      await processQueue();
+      expect(mockedPush).toHaveBeenCalledTimes(1);
+
+      resolveFirst({ status: 'success', message: 'Done' });
+      await first;
+    });
+
+    it('should allow new sync after previous completes', async () => {
+      mockedPush.mockResolvedValue({ status: 'success', message: 'Done' });
+
+      await attemptSync('First');
+      expect(isSyncing()).toBe(false);
+
+      const result = await attemptSync('Second');
+      expect(result).toBe('connected');
+      expect(mockedPush).toHaveBeenCalledTimes(2);
     });
   });
 });
