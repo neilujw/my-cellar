@@ -1,6 +1,9 @@
 # Changelog
 
 ## 2026-02-16
+Autocomplete for Country & Region (Step 12). Created a reusable TextAutocomplete component that shows a dropdown of all suggestions on focus, filters with case-insensitive "contains" matching as the user types, highlights the matched portion, and supports full keyboard navigation (arrow keys, Enter, Escape). Replaced the plain Country and Region text inputs in the Add Bottle form with TextAutocomplete, populated with unique values extracted from existing bottles. Free-text entry remains allowed for new values not yet in the cellar. Fields become disabled when an existing bottle is selected (preserving read-only behavior). Full ARIA support (combobox role, listbox, aria-expanded, aria-activedescendant). Added 21 unit tests for TextAutocomplete and 4 integration tests in AddBottle. All 403 Vitest tests pass. No new dependencies added.
+
+## 2026-02-16
 Polish & Optimization (Step 11). Removed the hard bundle size constraint in favor of trusting the inherently lightweight Svelte + Vite + Tailwind stack. Added a custom toast notification system with success, error, and info variants that auto-dismiss after a configurable duration, integrated across Add Bottle, Sync, Settings, and Conflict Resolution flows. Audited and improved error handling by wrapping all async code paths in try/catch and adding a global unhandled promise rejection handler that surfaces errors via toast. Implemented full PWA support with a Web App Manifest (name, icons, start_url, display: standalone), Service Worker with cache-first strategy for static assets and offline navigation fallback, and automatic new-version notification. Added Playwright E2E tests (Chromium-only) for adding a bottle, searching/filtering, and view navigation. Fixed a Svelte 5 reactivity bug where `$state` proxy arrays could not be cloned by IndexedDB. All 378 Vitest tests and 5 Playwright E2E tests pass.
 
 ## 2026-02-16

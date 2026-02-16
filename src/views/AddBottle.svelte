@@ -19,9 +19,11 @@
     type FormData,
     type FormErrors,
   } from '../lib/form-utils';
+  import { getUniqueCountries, getUniqueRegions } from '../lib/search-utils';
   import FormField from './FormField.svelte';
   import GrapeTagInput from './GrapeTagInput.svelte';
   import NameAutocomplete from './NameAutocomplete.svelte';
+  import TextAutocomplete from './TextAutocomplete.svelte';
 
   let form = $state<FormData>(createEmptyFormData());
   let errors = $state<FormErrors>({});
@@ -159,12 +161,26 @@
     <fieldset class="space-y-3">
       <legend class="text-sm font-semibold text-gray-700">Origin</legend>
       <div class="grid grid-cols-2 gap-3">
-        <FormField label="Country *" id="country" error={errors.country} errorTestId="error-country">
-          <input id="country" type="text" class="mt-1 block w-full rounded border border-gray-300 px-3 py-2" readonly={!!selectedBottle} value={form.country} oninput={(e) => set('country', e.currentTarget.value)} data-testid="input-country" />
-        </FormField>
-        <FormField label="Region *" id="region" error={errors.region} errorTestId="error-region">
-          <input id="region" type="text" class="mt-1 block w-full rounded border border-gray-300 px-3 py-2" readonly={!!selectedBottle} value={form.region} oninput={(e) => set('region', e.currentTarget.value)} data-testid="input-region" />
-        </FormField>
+        <TextAutocomplete
+          value={form.country}
+          suggestions={getUniqueCountries(allBottles)}
+          oninput={(v) => set('country', v)}
+          label="Country *"
+          id="country"
+          error={errors.country}
+          errorTestId="error-country"
+          disabled={!!selectedBottle}
+        />
+        <TextAutocomplete
+          value={form.region}
+          suggestions={getUniqueRegions(allBottles)}
+          oninput={(v) => set('region', v)}
+          label="Region *"
+          id="region"
+          error={errors.region}
+          errorTestId="error-region"
+          disabled={!!selectedBottle}
+        />
       </div>
     </fieldset>
 
