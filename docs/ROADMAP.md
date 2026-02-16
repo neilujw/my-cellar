@@ -71,10 +71,10 @@ Updated at 2026-02-16
 - [x] Full PWA support (Service Worker, Web App Manifest, installability)
 - [x] Playwright E2E tests for core user flows (add bottle, search, navigation)
 
-## Step 12: Autocomplete for Country, Region & Grape Varieties
+## Step 12: Autocomplete for Country & Region
+- [ ] Create generic TextAutocomplete component (show on focus, filter while typing, keyboard-accessible)
 - [ ] Implement autocomplete dropdown for Country field in Add Bottle form
 - [ ] Implement autocomplete dropdown for Region field in Add Bottle form
-- [ ] Implement autocomplete dropdown for Grape Varieties field (multi-select)
 - [ ] Extract existing values from current bottles to populate suggestion lists
 - [ ] Allow free-text entry for new values while suggesting existing ones
 
