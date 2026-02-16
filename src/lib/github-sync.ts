@@ -223,7 +223,7 @@ export async function pushToGitHub(
 
     // No changes — return early
     if (added.length === 0 && modified.length === 0 && deleted.length === 0) {
-      return { status: 'success', message: 'No changes to push.' };
+      return { status: 'success', message: 'No changes to push.', commitSha: baseCommitSha ?? undefined };
     }
 
     // Build new tree entries
@@ -386,7 +386,7 @@ export async function pullFromGitHub(
     );
 
     if (wineEntries.length === 0) {
-      return { status: 'success', message: 'Pulled 0 bottles from GitHub.', bottles: [] };
+      return { status: 'success', message: 'Pulled 0 bottles from GitHub.', bottles: [], commitSha: headSha };
     }
 
     // Fetch blob contents in batches

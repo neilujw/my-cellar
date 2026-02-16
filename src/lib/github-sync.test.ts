@@ -157,6 +157,40 @@ describe('pushToGitHub', () => {
     expect(client.rest.git.createTree).not.toHaveBeenCalled();
   });
 
+  it('should return commitSha when there are no changes to push', async () => {
+    const bottle = makeBottle();
+    const content = serializeBottle(bottle);
+    const blobHeader = `blob ${new TextEncoder().encode(content).length}\0${content}`;
+    const hashBuffer = await crypto.subtle.digest(
+      'SHA-1',
+      new TextEncoder().encode(blobHeader),
+    );
+    const blobSha = Array.from(new Uint8Array(hashBuffer))
+      .map((b) => b.toString(16).padStart(2, '0'))
+      .join('');
+
+    const client = createMockClient({
+      treeData: {
+        tree: [
+          {
+            path: 'wines/red/wine-abc-123.json',
+            mode: '100644',
+            type: 'blob',
+            sha: blobSha,
+          },
+        ],
+        sha: 'tree-sha-1',
+      },
+    });
+
+    const result = await pushToGitHub(client, 'owner/repo', [bottle]);
+
+    expect(result.status).toBe('success');
+    if (result.status === 'success') {
+      expect(result.commitSha).toBe('commit-sha-1');
+    }
+  });
+
   it('should handle first-time push to empty repository', async () => {
     const client = createMockClient({
       getRefError: new Error('Not Found'),
@@ -373,6 +407,22 @@ describe('pullFromGitHub', () => {
 
     expect(result.status).toBe('success');
     expect(result.bottles).toEqual([]);
+  });
+
+  it('should return commitSha even when repository has no wine files', async () => {
+    const client = createMockClient({
+      treeData: {
+        tree: [{ path: 'README.md', mode: '100644', type: 'blob', sha: 'readme-sha' }],
+        sha: 'tree-sha-1',
+      },
+    });
+
+    const result = await pullFromGitHub(client, 'owner/repo');
+
+    expect(result.status).toBe('success');
+    if (result.status === 'success') {
+      expect(result.commitSha).toBe('commit-sha-1');
+    }
   });
 
   it('should skip invalid wine files', async () => {

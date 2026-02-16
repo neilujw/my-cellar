@@ -191,4 +191,36 @@ describe('Settings', () => {
       expect(screen.queryByTestId('disconnect')).not.toBeInTheDocument();
     });
   });
+
+  describe('app info', () => {
+    it('should display the app version', () => {
+      render(Settings);
+
+      const info = screen.getByTestId('app-info');
+      expect(info).toHaveTextContent('Version');
+    });
+
+    it('should display last sync SHA when settings are saved and SHA exists', () => {
+      localStorage.setItem(
+        'my-cellar-github-settings',
+        JSON.stringify({ repo: 'saved/repo', pat: 'ghp_saved' }),
+      );
+      localStorage.setItem('my-cellar-last-synced-sha', 'abc1234567890def');
+
+      render(Settings);
+
+      expect(screen.getByTestId('last-sync-sha')).toHaveTextContent('abc1234');
+    });
+
+    it('should not display last sync SHA when no SHA is stored', () => {
+      localStorage.setItem(
+        'my-cellar-github-settings',
+        JSON.stringify({ repo: 'saved/repo', pat: 'ghp_saved' }),
+      );
+
+      render(Settings);
+
+      expect(screen.queryByTestId('last-sync-sha')).not.toBeInTheDocument();
+    });
+  });
 });

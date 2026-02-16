@@ -4,7 +4,7 @@
    * Allows testing the connection, saving credentials, and disconnecting.
    */
   import type { ConnectionStatus } from '../lib/types';
-  import { saveSettings, loadSettings, clearSettings } from '../lib/github-settings';
+  import { saveSettings, loadSettings, clearSettings, getLastSyncedCommitSha } from '../lib/github-settings';
   import { validateRepo, validatePat } from '../lib/settings-utils';
   import { createGitHubClient, testConnection } from '../lib/github-client';
   import SyncSection from './SyncSection.svelte';
@@ -154,4 +154,8 @@
       <SyncSection />
     {/if}
   </form>
+
+  <div class="mt-6 border-t border-gray-200 pt-4 text-xs text-gray-400" data-testid="app-info">
+    <p>Version {__APP_VERSION__}{#if saved}{@const sha = getLastSyncedCommitSha()}{#if sha} &middot; Last sync: <span data-testid="last-sync-sha">{sha.slice(0, 7)}</span>{/if}{/if}</p>
+  </div>
 </div>
