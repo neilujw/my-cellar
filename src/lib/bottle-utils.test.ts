@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 
-import { calculateQuantity, findDuplicate } from './bottle-utils';
+import { calculateQuantity, findDuplicate, searchBottlesByName } from './bottle-utils';
 import { HistoryAction, WineType, type Bottle, type HistoryEntry } from './types';
 
 function makeEntry(action: HistoryAction, quantity: number): HistoryEntry {
@@ -109,5 +109,67 @@ describe('findDuplicate', () => {
     const result = findDuplicate([], WineType.Red, 2015, 'Chateau Margaux');
 
     expect(result).toBeUndefined();
+  });
+});
+
+describe('searchBottlesByName', () => {
+  it('should return matching bottles on partial name match', () => {
+    const bottles = [makeBottle({ name: 'Chateau Margaux' })];
+
+    const results = searchBottlesByName(bottles, 'Marg');
+
+    expect(results).toHaveLength(1);
+    expect(results[0].name).toBe('Chateau Margaux');
+  });
+
+  it('should match case-insensitively', () => {
+    const bottles = [makeBottle({ name: 'Chateau Margaux' })];
+
+    const results = searchBottlesByName(bottles, 'chateau');
+
+    expect(results).toHaveLength(1);
+  });
+
+  it('should return empty array when no match exists', () => {
+    const bottles = [makeBottle({ name: 'Chateau Margaux' })];
+
+    const results = searchBottlesByName(bottles, 'Petrus');
+
+    expect(results).toHaveLength(0);
+  });
+
+  it('should return empty array when query is fewer than 2 characters', () => {
+    const bottles = [makeBottle({ name: 'Chateau Margaux' })];
+
+    expect(searchBottlesByName(bottles, '')).toHaveLength(0);
+    expect(searchBottlesByName(bottles, 'C')).toHaveLength(0);
+  });
+
+  it('should return empty array when bottles list is empty', () => {
+    const results = searchBottlesByName([], 'Chateau');
+
+    expect(results).toHaveLength(0);
+  });
+
+  it('should return results sorted alphabetically by name', () => {
+    const bottles = [
+      makeBottle({ id: '1', name: 'Zinfandel Reserve' }),
+      makeBottle({ id: '2', name: 'Côtes du Rhône' }),
+      makeBottle({ id: '3', name: 'Amarone della' }),
+    ];
+
+    const results = searchBottlesByName(bottles, 'del');
+
+    expect(results).toHaveLength(2);
+    expect(results[0].name).toBe('Amarone della');
+    expect(results[1].name).toBe('Zinfandel Reserve');
+  });
+
+  it('should match substring anywhere in the name', () => {
+    const bottles = [makeBottle({ name: 'Grand Cru Classé' })];
+
+    const results = searchBottlesByName(bottles, 'Cru');
+
+    expect(results).toHaveLength(1);
   });
 });

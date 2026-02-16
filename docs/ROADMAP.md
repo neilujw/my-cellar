@@ -1,6 +1,6 @@
 # Roadmap
 
-Updated at 2026-02-15
+Updated at 2026-02-16
 
 ## Step 1: Project Setup & Foundation ✅
 - [x] Initialize Svelte + Vite project with mobile-first configuration
@@ -56,7 +56,15 @@ Updated at 2026-02-15
 - [x] Implement Option 1: Create GitHub pull request for manual resolution
 - [x] Implement Option 2: Overwrite local data with GitHub state
 
-## Step 10: Polish & Optimization
+## Step 10: Autocomplete for Duplicate Prevention ✅
+- [x] Implement name-based autocomplete in Add Bottle form
+- [x] Display matching bottles as dropdown suggestions while typing
+- [x] Show info message when user selects an existing bottle
+- [x] Auto-fill selected bottle data with read-only fields for non-key attributes
+- [x] Reactive duplicate re-detection when name, vintage, or type changes
+- [x] Keyboard-accessible dropdown navigation (arrow keys, Enter, Escape)
+
+## Step 11: Polish & Optimization
 - [ ] Final bundle size optimization and code splitting
 - [ ] Performance optimization for mobile devices
 - [ ] Comprehensive error handling and user feedback messages

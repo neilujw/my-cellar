@@ -39,6 +39,15 @@ async function fillRequiredFields(user: ReturnType<typeof userEvent.setup>): Pro
   await user.type(screen.getByTestId('input-region'), 'Bordeaux');
 }
 
+/** Fills required fields for a new bottle (no autocomplete match). */
+async function fillNewBottleFields(user: ReturnType<typeof userEvent.setup>): Promise<void> {
+  await user.type(screen.getByTestId('input-name'), 'Petrus');
+  await user.type(screen.getByTestId('input-vintage'), '2020');
+  await user.selectOptions(screen.getByTestId('input-type'), WineType.Red);
+  await user.type(screen.getByTestId('input-country'), 'France');
+  await user.type(screen.getByTestId('input-region'), 'Pomerol');
+}
+
 describe('AddBottle', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -52,6 +61,7 @@ describe('AddBottle', () => {
 
   describe('form rendering', () => {
     it('should render all required and optional fields', () => {
+      vi.spyOn(storage, 'getAllBottles').mockResolvedValue([]);
       render(AddBottle);
 
       expect(screen.getByTestId('input-name')).toBeInTheDocument();
@@ -71,6 +81,7 @@ describe('AddBottle', () => {
     });
 
     it('should default quantity to 1 and currency to EUR', () => {
+      vi.spyOn(storage, 'getAllBottles').mockResolvedValue([]);
       render(AddBottle);
 
       expect(screen.getByTestId('input-quantity')).toHaveValue(1);
@@ -80,10 +91,10 @@ describe('AddBottle', () => {
 
   describe('validation', () => {
     it('should display validation errors when submitting empty required fields', async () => {
+      vi.spyOn(storage, 'getAllBottles').mockResolvedValue([]);
       render(AddBottle);
       const user = userEvent.setup();
 
-      // Clear the default quantity value so it also triggers an error
       await user.clear(screen.getByTestId('input-quantity'));
       await user.click(screen.getByTestId('submit-button'));
 
@@ -96,6 +107,7 @@ describe('AddBottle', () => {
     });
 
     it('should not call storage when validation fails', async () => {
+      vi.spyOn(storage, 'getAllBottles').mockResolvedValue([]);
       const spy = vi.spyOn(storage, 'addBottle');
       render(AddBottle);
       const user = userEvent.setup();
@@ -113,13 +125,13 @@ describe('AddBottle', () => {
       render(AddBottle);
       const user = userEvent.setup();
 
-      await fillRequiredFields(user);
+      await fillNewBottleFields(user);
       await user.click(screen.getByTestId('submit-button'));
 
       expect(addSpy).toHaveBeenCalledOnce();
       const bottle = addSpy.mock.calls[0][0];
-      expect(bottle.name).toBe('Chateau Margaux');
-      expect(bottle.vintage).toBe(2015);
+      expect(bottle.name).toBe('Petrus');
+      expect(bottle.vintage).toBe(2020);
       expect(bottle.type).toBe(WineType.Red);
       expect(window.location.hash).toBe('#/');
     });
@@ -132,24 +144,28 @@ describe('AddBottle', () => {
       render(AddBottle);
       const user = userEvent.setup();
 
-      await fillRequiredFields(user);
+      await fillNewBottleFields(user);
       await user.click(screen.getByTestId('submit-button'));
 
-      expect(mockedAttemptSync).toHaveBeenCalledWith(
-        expect.stringContaining('Chateau Margaux'),
-      );
+      expect(mockedAttemptSync).toHaveBeenCalledWith(expect.stringContaining('Petrus'));
     });
 
-    it('should call attemptSync after confirming duplicate merge', async () => {
+    it('should call attemptSync after submitting with existing bottle selected', async () => {
       const existing = makeBottle();
       vi.spyOn(storage, 'getAllBottles').mockResolvedValue([existing]);
       vi.spyOn(storage, 'updateBottle').mockResolvedValue();
       render(AddBottle);
       const user = userEvent.setup();
 
-      await fillRequiredFields(user);
+      // Type name to trigger autocomplete
+      await user.type(screen.getByTestId('input-name'), 'Chateau');
+
+      // Select from autocomplete
+      const item = await screen.findByTestId('autocomplete-item-0');
+      await user.click(item);
+
+      // Submit
       await user.click(screen.getByTestId('submit-button'));
-      await user.click(screen.getByTestId('confirm-duplicate'));
 
       expect(mockedAttemptSync).toHaveBeenCalledWith(
         expect.stringContaining('Chateau Margaux'),
@@ -157,32 +173,107 @@ describe('AddBottle', () => {
     });
   });
 
-  describe('duplicate detection', () => {
-    it('should show confirmation banner when duplicate is found', async () => {
+  describe('autocomplete selection', () => {
+    it('should show info banner when existing bottle is selected from autocomplete', async () => {
       const existing = makeBottle();
       vi.spyOn(storage, 'getAllBottles').mockResolvedValue([existing]);
       render(AddBottle);
       const user = userEvent.setup();
 
-      await fillRequiredFields(user);
-      await user.click(screen.getByTestId('submit-button'));
+      await user.type(screen.getByTestId('input-name'), 'Chateau');
+      const item = await screen.findByTestId('autocomplete-item-0');
+      await user.click(item);
 
-      const banner = screen.getByTestId('duplicate-banner');
+      const banner = screen.getByTestId('existing-bottle-banner');
       expect(banner).toBeInTheDocument();
       expect(banner).toHaveTextContent('Chateau Margaux');
       expect(banner).toHaveTextContent('2015');
+      expect(banner).toHaveTextContent('3 in stock');
     });
 
-    it('should merge history entry on confirm and navigate to dashboard', async () => {
+    it('should auto-fill form fields when bottle is selected', async () => {
+      const existing = makeBottle({ country: 'France', region: 'Bordeaux', rating: 9 });
+      vi.spyOn(storage, 'getAllBottles').mockResolvedValue([existing]);
+      render(AddBottle);
+      const user = userEvent.setup();
+
+      await user.type(screen.getByTestId('input-name'), 'Chateau');
+      const item = await screen.findByTestId('autocomplete-item-0');
+      await user.click(item);
+
+      expect(screen.getByTestId('input-country')).toHaveValue('France');
+      expect(screen.getByTestId('input-region')).toHaveValue('Bordeaux');
+      expect(screen.getByTestId('input-vintage')).toHaveValue(2015);
+      expect(screen.getByTestId('input-rating')).toHaveValue(9);
+    });
+
+    it('should make non-key fields read-only when existing bottle is selected', async () => {
+      const existing = makeBottle();
+      vi.spyOn(storage, 'getAllBottles').mockResolvedValue([existing]);
+      render(AddBottle);
+      const user = userEvent.setup();
+
+      await user.type(screen.getByTestId('input-name'), 'Chateau');
+      const item = await screen.findByTestId('autocomplete-item-0');
+      await user.click(item);
+
+      expect(screen.getByTestId('input-country')).toHaveAttribute('readonly');
+      expect(screen.getByTestId('input-region')).toHaveAttribute('readonly');
+      expect(screen.getByTestId('input-rating')).toHaveAttribute('readonly');
+      expect(screen.getByTestId('input-location')).toHaveAttribute('readonly');
+      expect(screen.getByTestId('input-notes')).toHaveAttribute('readonly');
+      expect(screen.getByTestId('input-grape')).toBeDisabled();
+    });
+
+    it('should keep key and history fields editable when existing bottle is selected', async () => {
+      const existing = makeBottle();
+      vi.spyOn(storage, 'getAllBottles').mockResolvedValue([existing]);
+      render(AddBottle);
+      const user = userEvent.setup();
+
+      await user.type(screen.getByTestId('input-name'), 'Chateau');
+      const item = await screen.findByTestId('autocomplete-item-0');
+      await user.click(item);
+
+      expect(screen.getByTestId('input-name')).not.toHaveAttribute('readonly');
+      expect(screen.getByTestId('input-vintage')).not.toHaveAttribute('readonly');
+      expect(screen.getByTestId('input-type')).not.toBeDisabled();
+      expect(screen.getByTestId('input-quantity')).not.toHaveAttribute('readonly');
+      expect(screen.getByTestId('input-price')).not.toHaveAttribute('readonly');
+      expect(screen.getByTestId('input-currency')).not.toHaveAttribute('readonly');
+      expect(screen.getByTestId('input-history-notes')).not.toHaveAttribute('readonly');
+    });
+
+    it('should clear selection and remove banner when clear button is clicked', async () => {
+      const existing = makeBottle();
+      vi.spyOn(storage, 'getAllBottles').mockResolvedValue([existing]);
+      render(AddBottle);
+      const user = userEvent.setup();
+
+      await user.type(screen.getByTestId('input-name'), 'Chateau');
+      const item = await screen.findByTestId('autocomplete-item-0');
+      await user.click(item);
+
+      expect(screen.getByTestId('existing-bottle-banner')).toBeInTheDocument();
+
+      await user.click(screen.getByTestId('clear-selection'));
+
+      expect(screen.queryByTestId('existing-bottle-banner')).not.toBeInTheDocument();
+      expect(screen.getByTestId('input-country')).not.toHaveAttribute('readonly');
+    });
+
+    it('should submit with existing bottle and add history entry', async () => {
       const existing = makeBottle();
       vi.spyOn(storage, 'getAllBottles').mockResolvedValue([existing]);
       const updateSpy = vi.spyOn(storage, 'updateBottle').mockResolvedValue();
       render(AddBottle);
       const user = userEvent.setup();
 
-      await fillRequiredFields(user);
+      await user.type(screen.getByTestId('input-name'), 'Chateau');
+      const item = await screen.findByTestId('autocomplete-item-0');
+      await user.click(item);
+
       await user.click(screen.getByTestId('submit-button'));
-      await user.click(screen.getByTestId('confirm-duplicate'));
 
       expect(updateSpy).toHaveBeenCalledOnce();
       const updated = updateSpy.mock.calls[0][0];
@@ -192,26 +283,84 @@ describe('AddBottle', () => {
       expect(window.location.hash).toBe('#/');
     });
 
-    it('should dismiss banner on cancel and keep form', async () => {
+    it('should submit without existing bottle and create new bottle', async () => {
+      vi.spyOn(storage, 'getAllBottles').mockResolvedValue([]);
+      const addSpy = vi.spyOn(storage, 'addBottle').mockResolvedValue('new-id');
+      render(AddBottle);
+      const user = userEvent.setup();
+
+      await fillNewBottleFields(user);
+      await user.click(screen.getByTestId('submit-button'));
+
+      expect(addSpy).toHaveBeenCalledOnce();
+    });
+  });
+
+  describe('reactive duplicate re-detection', () => {
+    it('should clear selection when name no longer matches any bottle', async () => {
       const existing = makeBottle();
       vi.spyOn(storage, 'getAllBottles').mockResolvedValue([existing]);
       render(AddBottle);
       const user = userEvent.setup();
 
-      await fillRequiredFields(user);
-      await user.click(screen.getByTestId('submit-button'));
+      // Select existing bottle
+      await user.type(screen.getByTestId('input-name'), 'Chateau');
+      const item = await screen.findByTestId('autocomplete-item-0');
+      await user.click(item);
 
-      expect(screen.getByTestId('duplicate-banner')).toBeInTheDocument();
+      expect(screen.getByTestId('existing-bottle-banner')).toBeInTheDocument();
 
-      await user.click(screen.getByTestId('cancel-duplicate'));
+      // Change name so it no longer matches
+      await user.clear(screen.getByTestId('input-name'));
+      await user.type(screen.getByTestId('input-name'), 'Something Else');
 
-      expect(screen.queryByTestId('duplicate-banner')).not.toBeInTheDocument();
-      expect(screen.getByTestId('add-bottle-form')).toBeInTheDocument();
+      expect(screen.queryByTestId('existing-bottle-banner')).not.toBeInTheDocument();
+      expect(screen.getByTestId('input-country')).not.toHaveAttribute('readonly');
+    });
+
+    it('should match a different bottle when type changes', async () => {
+      const red = makeBottle({ id: 'red-1', type: WineType.Red });
+      const white = makeBottle({ id: 'white-1', type: WineType.White });
+      vi.spyOn(storage, 'getAllBottles').mockResolvedValue([red, white]);
+      render(AddBottle);
+      const user = userEvent.setup();
+
+      // Select the red bottle
+      await user.type(screen.getByTestId('input-name'), 'Chateau');
+      const item = await screen.findByTestId('autocomplete-item-0');
+      await user.click(item);
+
+      expect(screen.getByTestId('existing-bottle-banner')).toHaveTextContent('Red');
+
+      // Change type to white
+      await user.selectOptions(screen.getByTestId('input-type'), WineType.White);
+
+      const banner = screen.getByTestId('existing-bottle-banner');
+      expect(banner).toHaveTextContent('White');
+    });
+
+    it('should clear selection when vintage changes to non-matching', async () => {
+      const existing = makeBottle();
+      vi.spyOn(storage, 'getAllBottles').mockResolvedValue([existing]);
+      render(AddBottle);
+      const user = userEvent.setup();
+
+      await user.type(screen.getByTestId('input-name'), 'Chateau');
+      const item = await screen.findByTestId('autocomplete-item-0');
+      await user.click(item);
+
+      expect(screen.getByTestId('existing-bottle-banner')).toBeInTheDocument();
+
+      await user.clear(screen.getByTestId('input-vintage'));
+      await user.type(screen.getByTestId('input-vintage'), '2020');
+
+      expect(screen.queryByTestId('existing-bottle-banner')).not.toBeInTheDocument();
     });
   });
 
   describe('grape variety tag input', () => {
     it('should add tags on Enter key', async () => {
+      vi.spyOn(storage, 'getAllBottles').mockResolvedValue([]);
       render(AddBottle);
       const user = userEvent.setup();
 
@@ -222,6 +371,7 @@ describe('AddBottle', () => {
     });
 
     it('should add tags on comma key', async () => {
+      vi.spyOn(storage, 'getAllBottles').mockResolvedValue([]);
       render(AddBottle);
       const user = userEvent.setup();
 
@@ -232,6 +382,7 @@ describe('AddBottle', () => {
     });
 
     it('should remove tags individually', async () => {
+      vi.spyOn(storage, 'getAllBottles').mockResolvedValue([]);
       render(AddBottle);
       const user = userEvent.setup();
 
@@ -255,7 +406,7 @@ describe('AddBottle', () => {
       render(AddBottle);
       const user = userEvent.setup();
 
-      await fillRequiredFields(user);
+      await fillNewBottleFields(user);
       await user.click(screen.getByTestId('submit-button'));
 
       expect(addSpy).toHaveBeenCalledOnce();
@@ -266,6 +417,7 @@ describe('AddBottle', () => {
     });
 
     it('should default price currency to EUR', () => {
+      vi.spyOn(storage, 'getAllBottles').mockResolvedValue([]);
       render(AddBottle);
 
       expect(screen.getByTestId('input-currency')).toHaveValue('EUR');

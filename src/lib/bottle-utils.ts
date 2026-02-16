@@ -17,6 +17,27 @@ export function calculateQuantity(history: readonly HistoryEntry[]): number {
   return Math.max(0, total);
 }
 
+const MIN_SEARCH_LENGTH = 2;
+
+/**
+ * Searches bottles by name using case-insensitive "contains" matching.
+ *
+ * Returns matching bottles sorted alphabetically by name.
+ * Returns an empty array if the query is fewer than 2 characters.
+ */
+export function searchBottlesByName(
+  bottles: readonly Bottle[],
+  query: string,
+): Bottle[] {
+  if (query.length < MIN_SEARCH_LENGTH) return [];
+
+  const normalizedQuery = query.toLowerCase();
+
+  return bottles
+    .filter((bottle) => bottle.name.toLowerCase().includes(normalizedQuery))
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
 /**
  * Finds a duplicate bottle matching the given type, vintage, and name.
  *

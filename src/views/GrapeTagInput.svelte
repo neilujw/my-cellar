@@ -3,9 +3,10 @@
   interface Props {
     tags: readonly string[];
     onchange: (tags: readonly string[]) => void;
+    disabled?: boolean;
   }
 
-  let { tags, onchange }: Props = $props();
+  let { tags, onchange, disabled = false }: Props = $props();
   let inputValue = $state('');
 
   function addTag(value: string): void {
@@ -38,5 +39,5 @@
       </span>
     {/each}
   </div>
-  <input id="grape" type="text" class="mt-1 block w-full rounded border border-gray-300 px-3 py-2" placeholder="Type and press Enter" value={inputValue} oninput={(e) => { inputValue = e.currentTarget.value; }} onkeydown={onKeydown} data-testid="input-grape" />
+  <input id="grape" type="text" class="mt-1 block w-full rounded border border-gray-300 px-3 py-2" placeholder="Type and press Enter" {disabled} value={inputValue} oninput={(e) => { inputValue = e.currentTarget.value; }} onkeydown={onKeydown} data-testid="input-grape" />
 </div>
