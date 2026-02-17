@@ -93,7 +93,15 @@ Updated at 2026-02-17
 - [x] Add consume/remove buttons to bottle detail modal
 - [x] Update history and sync changes to GitHub
 
-## Step 15: Drinking Window (Consume Starting From)
+## Step 15: Manual Sync with Queue Counter
+- [ ] Remove auto-sync behavior from all change operations (add, consume, edit, remove)
+- [ ] Queue all local changes (create, update, delete) to sync queue in IndexedDB
+- [ ] Display queued item count badge on sync icon (e.g., "3" for 3 pending changes)
+- [ ] Implement manual push on sync icon click when queue has items
+- [ ] Implement manual pull on sync icon click when queue is empty
+- [ ] Update sync status indicator to show "N changes pending" state
+
+## Step 16: Drinking Window (Consume Starting From)
 - [ ] Add "consumeStartingFrom" field to bottle data model (year format: YYYY)
 - [ ] Add optional year input field to Add Bottle form
 - [ ] Display drinking window indicator on bottle cards (e.g., "Drink from 2028")
