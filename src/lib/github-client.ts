@@ -4,9 +4,18 @@ import type { ConnectionStatus } from './types';
 /** Octokit instance type, re-exported for consumers that need to pass the client around. */
 export type OctokitClient = InstanceType<typeof Octokit>;
 
+/**
+ * Custom fetch wrapper that disables browser HTTP caching.
+ * GitHub API responses include caching headers that can cause stale data
+ * when manually pulling (e.g. fetching an old commit SHA).
+ */
+function noCacheFetch(url: string | URL | Request, options?: RequestInit): Promise<Response> {
+  return fetch(url, { ...options, cache: 'no-store' });
+}
+
 /** Creates an authenticated Octokit client using a Personal Access Token. */
 export function createGitHubClient(pat: string): OctokitClient {
-  return new Octokit({ auth: pat });
+  return new Octokit({ auth: pat, request: { fetch: noCacheFetch } });
 }
 
 /**

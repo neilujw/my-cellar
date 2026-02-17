@@ -45,7 +45,9 @@
     if (ratingError) return;
     saving = true;
     try {
-      const updated = buildUpdatedBottle(bottle, { rating, notes, location, country, region, grapeVariety });
+      // Strip Svelte 5 reactive proxies — IDB's structured clone can't handle them.
+      const plainBottle = $state.snapshot(bottle);
+      const updated = buildUpdatedBottle(plainBottle, { rating, notes, location, country, region, grapeVariety: $state.snapshot(grapeVariety) });
       await updateBottle(updated);
       attemptSync(`Updated bottle: ${bottle.name} ${bottle.vintage}`);
       toastSuccess(`Updated ${bottle.name} ${bottle.vintage}`);

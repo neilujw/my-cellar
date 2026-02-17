@@ -104,11 +104,23 @@
 
     submitting = true;
     try {
+      // Re-fetch bottles from IDB to ensure fresh duplicate detection.
+      // The allBottles list may be stale if a pull or sync happened after the form loaded.
+      const freshBottles = await getAllBottles();
+      allBottles = freshBottles;
+      const freshMatch = findDuplicate(freshBottles, form.type as WineType, Number(form.vintage), form.name);
+      if (freshMatch && !selectedBottle) {
+        selectedBottle = freshMatch;
+        fillFormFromBottle(freshMatch);
+      }
+
       let syncDescription: string;
 
       if (selectedBottle) {
+        // Strip Svelte 5 reactive proxies — IDB's structured clone can't handle them.
+        const plain = $state.snapshot(selectedBottle);
         const entry = createHistoryEntryFromForm(form);
-        await updateBottle({ ...selectedBottle, grapeVariety: [...selectedBottle.grapeVariety], history: [...selectedBottle.history, entry] });
+        await updateBottle({ ...plain, grapeVariety: [...plain.grapeVariety], history: [...plain.history, entry] });
         syncDescription = `Updated bottle: ${selectedBottle.name} ${selectedBottle.vintage}`;
       } else {
         const bottle = createBottleFromForm(form);

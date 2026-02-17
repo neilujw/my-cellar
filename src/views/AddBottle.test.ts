@@ -613,4 +613,96 @@ describe("AddBottle", () => {
       expect(screen.getByTestId("input-currency")).toHaveValue("EUR");
     });
   });
+
+  describe("IDB integration — no storage mocks", () => {
+    beforeEach(async () => {
+      await storage.clearAll();
+    });
+
+    it("should write to real IDB when updating an existing bottle with price history", async () => {
+      // Arrange: insert a bottle with a price in history directly into IDB
+      const existing = makeBottle({
+        history: [
+          {
+            date: "2026-01-15",
+            action: HistoryAction.Added,
+            quantity: 3,
+            price: { amount: 42.5, currency: "EUR" },
+          },
+        ],
+      });
+      await storage.addBottle(existing);
+
+      // getAllBottles reads from real IDB; don't mock it
+      render(AddBottle);
+      const user = userEvent.setup();
+
+      // Act: trigger autocomplete to select the existing bottle
+      await user.type(screen.getByTestId("input-name"), "Chateau");
+      const item = await screen.findByTestId("autocomplete-item-0");
+      await user.click(item);
+
+      // Submit — this must call updateBottle with a cloneable object
+      await user.click(screen.getByTestId("submit-button"));
+
+      // Assert: the bottle was persisted (not a DataCloneError)
+      const stored = await storage.getBottle("existing-1");
+      expect(stored).toBeDefined();
+      expect(stored!.history).toHaveLength(2);
+      expect(stored!.history[0].price).toEqual({ amount: 42.5, currency: "EUR" });
+      expect(stored!.history[1].action).toBe(HistoryAction.Added);
+    });
+
+    it("should write to real IDB when adding a brand-new bottle", async () => {
+      // Arrange: empty DB
+      render(AddBottle);
+      const user = userEvent.setup();
+
+      // Act: fill in a new bottle with a price
+      await fillNewBottleFields(user);
+      await user.type(screen.getByTestId("input-price"), "25");
+      await user.click(screen.getByTestId("submit-button"));
+
+      // Assert: exactly one bottle stored in IDB
+      const all = await storage.getAllBottles();
+      expect(all).toHaveLength(1);
+      expect(all[0].name).toBe("Petrus");
+      expect(all[0].history[0].price).toEqual({ amount: 25, currency: "EUR" });
+    });
+
+    it("should write to real IDB when fresh duplicate detected at submit time", async () => {
+      // Arrange: start with an empty allBottles (bottle not yet in DB)
+      render(AddBottle);
+      const user = userEvent.setup();
+
+      // Fill fields matching a bottle that will be inserted into IDB mid-flow
+      await user.type(screen.getByTestId("input-name"), "Chateau Margaux");
+      await user.type(screen.getByTestId("input-vintage"), "2015");
+      await user.selectOptions(screen.getByTestId("input-type"), WineType.Red);
+      await user.type(screen.getByTestId("input-country"), "France");
+
+      // Now insert the bottle into IDB (simulating a pull that happened in the background)
+      const existing = makeBottle({
+        history: [
+          {
+            date: "2026-01-15",
+            action: HistoryAction.Added,
+            quantity: 6,
+            price: { amount: 100, currency: "USD" },
+          },
+        ],
+      });
+      await storage.addBottle(existing);
+
+      // Act: submit — handleSubmit re-fetches from IDB and detects the duplicate
+      await user.click(screen.getByTestId("submit-button"));
+
+      // Assert: the existing bottle was updated, not a new one created
+      const all = await storage.getAllBottles();
+      expect(all).toHaveLength(1);
+      expect(all[0].id).toBe("existing-1");
+      expect(all[0].history).toHaveLength(2);
+      expect(all[0].history[0].price).toEqual({ amount: 100, currency: "USD" });
+    });
+  });
 });

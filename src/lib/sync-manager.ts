@@ -64,20 +64,24 @@ export async function attemptSync(actionDescription: string): Promise<SyncStatus
       dispatchSyncStatus('conflict', 0);
       return 'conflict';
     } else {
-      await addToSyncQueue({
-        timestamp: new Date().toISOString(),
-        action: actionDescription,
-      });
+      try {
+        await addToSyncQueue({
+          timestamp: new Date().toISOString(),
+          action: actionDescription,
+        });
+      } catch { /* queue write failure is non-critical */ }
       const pendingCount = await getSyncQueueCount();
       dispatchSyncStatus('offline', pendingCount);
       scheduleRetry();
       return 'offline';
     }
   } catch {
-    await addToSyncQueue({
-      timestamp: new Date().toISOString(),
-      action: actionDescription,
-    });
+    try {
+      await addToSyncQueue({
+        timestamp: new Date().toISOString(),
+        action: actionDescription,
+      });
+    } catch { /* queue write failure is non-critical */ }
     const pendingCount = await getSyncQueueCount();
     dispatchSyncStatus('error', pendingCount);
     return 'error';

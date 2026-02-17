@@ -185,4 +185,46 @@ describe('EditBottle', () => {
       expect(onclose).toHaveBeenCalledOnce();
     });
   });
+
+  describe('IDB integration — no storage mocks', () => {
+    beforeEach(() => {
+      // Restore real storage functions for this block
+      vi.restoreAllMocks();
+      storage.resetDbConnection();
+      vi.spyOn(syncManager, 'attemptSync').mockResolvedValue('connected');
+    });
+
+    it('should write to real IDB when saving a bottle with price history', async () => {
+      // Arrange: insert a bottle with nested price objects into real IDB
+      const bottle = makeBottle({
+        history: [
+          {
+            date: '2026-01-15',
+            action: HistoryAction.Added,
+            quantity: 6,
+            price: { amount: 55, currency: 'EUR' },
+          },
+        ],
+      });
+      await storage.addBottle(bottle);
+      vi.spyOn(storage, 'getAllBottles').mockResolvedValue([]);
+
+      const onsave = vi.fn();
+      render(EditBottle, { props: { bottle, onclose: vi.fn(), onsave } });
+      const user = userEvent.setup();
+
+      // Act: change rating and save
+      const ratingInput = screen.getByTestId('edit-input-rating');
+      await user.clear(ratingInput);
+      await user.type(ratingInput, '8');
+      await user.click(screen.getByTestId('edit-save-button'));
+
+      // Assert: bottle was persisted to IDB (no DataCloneError)
+      const stored = await storage.getBottle('bottle-1');
+      expect(stored).toBeDefined();
+      expect(stored!.rating).toBe(8);
+      expect(stored!.history[0].price).toEqual({ amount: 55, currency: 'EUR' });
+      expect(onsave).toHaveBeenCalledOnce();
+    });
+  });
 });
