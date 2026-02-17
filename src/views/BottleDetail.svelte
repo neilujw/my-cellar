@@ -2,6 +2,7 @@
   /** Full-page detail modal showing all bottle fields and history. */
   import { WineType, type Bottle } from '../lib/types';
   import { calculateQuantity } from '../lib/bottle-utils';
+  import { consumeBottle, removeBottle } from '../lib/bottle-actions';
   import HistoryTimeline from './HistoryTimeline.svelte';
   import EditBottle from './EditBottle.svelte';
 
@@ -18,21 +19,26 @@
 
   const quantity = $derived(calculateQuantity(currentBottle.history));
 
-  const typeLabels: Record<WineType, string> = {
-    [WineType.Red]: 'Red', [WineType.White]: 'White',
-    [WineType.Rose]: 'Rosé', [WineType.Sparkling]: 'Sparkling',
-  };
-
-  const typeBadgeColors: Record<WineType, string> = {
-    [WineType.Red]: 'bg-red-100 text-red-800',
-    [WineType.White]: 'bg-yellow-100 text-yellow-800',
-    [WineType.Rose]: 'bg-pink-100 text-pink-800',
-    [WineType.Sparkling]: 'bg-amber-100 text-amber-800',
-  };
+  const typeLabels: Record<WineType, string> = { [WineType.Red]: 'Red', [WineType.White]: 'White', [WineType.Rose]: 'Rosé', [WineType.Sparkling]: 'Sparkling' };
+  const typeBadgeColors: Record<WineType, string> = { [WineType.Red]: 'bg-red-100 text-red-800', [WineType.White]: 'bg-yellow-100 text-yellow-800', [WineType.Rose]: 'bg-pink-100 text-pink-800', [WineType.Sparkling]: 'bg-amber-100 text-amber-800' };
 
   function handleEditSave(updated: Bottle): void {
     currentBottle = updated;
     showEdit = false;
+    onupdate(updated);
+  }
+
+  async function handleConsume(): Promise<void> {
+    const snapshot = $state.snapshot(currentBottle);
+    const updated = await consumeBottle(snapshot);
+    currentBottle = updated;
+    onupdate(updated);
+  }
+
+  async function handleRemove(): Promise<void> {
+    const snapshot = $state.snapshot(currentBottle);
+    const updated = await removeBottle(snapshot);
+    currentBottle = updated;
     onupdate(updated);
   }
 </script>
@@ -67,7 +73,15 @@
       <div class="grid grid-cols-2 gap-3">
         <div class="rounded-lg bg-gray-50 p-3">
           <p class="text-xs text-gray-500">Quantity</p>
-          <p class="font-semibold" data-testid="detail-quantity">{quantity} bottle{quantity !== 1 ? 's' : ''}</p>
+          <div class="flex items-center justify-between">
+            <p class="font-semibold" data-testid="detail-quantity">{quantity} bottle{quantity !== 1 ? 's' : ''}</p>
+            {#if quantity > 0}
+              <div class="flex gap-1">
+                <button type="button" class="rounded px-1.5 py-0.5 text-xs font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 transition-colors" data-testid="detail-consume" onclick={handleConsume} aria-label="Consume 1 bottle">−1</button>
+                <button type="button" class="rounded px-1.5 py-0.5 text-xs font-medium text-red-700 bg-red-50 hover:bg-red-100 transition-colors" data-testid="detail-remove" onclick={handleRemove} aria-label="Remove 1 bottle">✕</button>
+              </div>
+            {/if}
+          </div>
         </div>
         {#if currentBottle.rating !== undefined}
           <div class="rounded-lg bg-gray-50 p-3">

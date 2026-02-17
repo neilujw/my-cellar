@@ -39,6 +39,38 @@ export function searchBottlesByName(
 }
 
 /**
+ * Creates a "consumed" history entry with quantity 1 and today's date.
+ */
+export function createConsumeHistoryEntry(): HistoryEntry {
+  return {
+    date: new Date().toISOString().split('T')[0],
+    action: HistoryAction.Consumed,
+    quantity: 1,
+  };
+}
+
+/**
+ * Creates a "removed" history entry with quantity 1 and today's date.
+ */
+export function createRemoveHistoryEntry(): HistoryEntry {
+  return {
+    date: new Date().toISOString().split('T')[0],
+    action: HistoryAction.Removed,
+    quantity: 1,
+  };
+}
+
+/**
+ * Returns a new Bottle with the given history entry appended.
+ */
+export function applyHistoryEntry(bottle: Bottle, entry: HistoryEntry): Bottle {
+  return {
+    ...bottle,
+    history: [...bottle.history, entry],
+  };
+}
+
+/**
  * Finds a duplicate bottle matching the given type, vintage, and name.
  *
  * Matching rules:

@@ -5,6 +5,7 @@ import { userEvent } from '@testing-library/user-event';
 
 import BottleCard from './BottleCard.svelte';
 import { HistoryAction, WineType, type Bottle } from '../lib/types';
+import * as bottleActions from '../lib/bottle-actions';
 
 function makeBottle(overrides: Partial<Bottle> = {}): Bottle {
   return {
@@ -25,6 +26,7 @@ function makeBottle(overrides: Partial<Bottle> = {}): Bottle {
 describe('BottleCard', () => {
   afterEach(() => {
     cleanup();
+    vi.restoreAllMocks();
   });
 
   it('should render all bottle fields', () => {
@@ -97,6 +99,76 @@ describe('BottleCard', () => {
 
       const card = screen.getByTestId('bottle-card');
       expect(card).not.toHaveAttribute('role');
+    });
+  });
+
+  describe('consume/remove buttons', () => {
+    it('should show consume and remove buttons when quantity > 0', () => {
+      render(BottleCard, { props: { bottle: makeBottle() } });
+
+      expect(screen.getByTestId('bottle-card-consume')).toBeInTheDocument();
+      expect(screen.getByTestId('bottle-card-remove')).toBeInTheDocument();
+    });
+
+    it('should hide consume and remove buttons when quantity is 0', () => {
+      const bottle = makeBottle({
+        history: [
+          { date: '2026-01-01', action: HistoryAction.Added, quantity: 1 },
+          { date: '2026-01-02', action: HistoryAction.Consumed, quantity: 1 },
+        ],
+      });
+      render(BottleCard, { props: { bottle } });
+
+      expect(screen.queryByTestId('bottle-card-consume')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('bottle-card-remove')).not.toBeInTheDocument();
+    });
+
+    it('should call consumeBottle and onupdate when consume is clicked', async () => {
+      const updatedBottle = makeBottle({ id: 'updated' });
+      vi.spyOn(bottleActions, 'consumeBottle').mockResolvedValue(updatedBottle);
+      const onupdate = vi.fn();
+      render(BottleCard, { props: { bottle: makeBottle(), onupdate } });
+      const user = userEvent.setup();
+
+      await user.click(screen.getByTestId('bottle-card-consume'));
+
+      expect(bottleActions.consumeBottle).toHaveBeenCalledOnce();
+      expect(onupdate).toHaveBeenCalledWith(updatedBottle);
+    });
+
+    it('should call removeBottle and onupdate when remove is clicked', async () => {
+      const updatedBottle = makeBottle({ id: 'updated' });
+      vi.spyOn(bottleActions, 'removeBottle').mockResolvedValue(updatedBottle);
+      const onupdate = vi.fn();
+      render(BottleCard, { props: { bottle: makeBottle(), onupdate } });
+      const user = userEvent.setup();
+
+      await user.click(screen.getByTestId('bottle-card-remove'));
+
+      expect(bottleActions.removeBottle).toHaveBeenCalledOnce();
+      expect(onupdate).toHaveBeenCalledWith(updatedBottle);
+    });
+
+    it('should not trigger card onclick when consume button is clicked', async () => {
+      vi.spyOn(bottleActions, 'consumeBottle').mockResolvedValue(makeBottle());
+      const onclick = vi.fn();
+      render(BottleCard, { props: { bottle: makeBottle(), onclick } });
+      const user = userEvent.setup();
+
+      await user.click(screen.getByTestId('bottle-card-consume'));
+
+      expect(onclick).not.toHaveBeenCalled();
+    });
+
+    it('should not trigger card onclick when remove button is clicked', async () => {
+      vi.spyOn(bottleActions, 'removeBottle').mockResolvedValue(makeBottle());
+      const onclick = vi.fn();
+      render(BottleCard, { props: { bottle: makeBottle(), onclick } });
+      const user = userEvent.setup();
+
+      await user.click(screen.getByTestId('bottle-card-remove'));
+
+      expect(onclick).not.toHaveBeenCalled();
     });
   });
 });

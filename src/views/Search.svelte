@@ -132,7 +132,7 @@
     {:else}
       <div class="mt-3 space-y-2" data-testid="search-results">
         {#each sortedBottles as bottle (bottle.id)}
-          <BottleCard {bottle} onclick={(b) => { selectedBottle = b; }} />
+          <BottleCard {bottle} onclick={(b) => { selectedBottle = b; }} onupdate={() => loadBottles()} />
         {/each}
       </div>
     {/if}

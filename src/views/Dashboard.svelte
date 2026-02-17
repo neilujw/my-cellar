@@ -115,7 +115,7 @@
         <h3 class="text-sm font-semibold text-gray-700">Recent Bottles</h3>
         <div class="mt-2 space-y-2" data-testid="recent-bottles">
           {#each recentBottles as bottle (bottle.id)}
-            <BottleCard {bottle} onclick={(b) => { selectedBottle = b; }} />
+            <BottleCard {bottle} onclick={(b) => { selectedBottle = b; }} onupdate={() => loadBottles()} />
           {/each}
         </div>
       </section>

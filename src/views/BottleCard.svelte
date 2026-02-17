@@ -1,14 +1,16 @@
 <script lang="ts">
-  /** Read-only card displaying a bottle's key information. */
+  /** Read-only card displaying a bottle's key information with quick actions. */
   import { WineType, type Bottle } from '../lib/types';
   import { calculateQuantity } from '../lib/bottle-utils';
+  import { consumeBottle, removeBottle } from '../lib/bottle-actions';
 
   interface Props {
     bottle: Bottle;
     onclick?: (bottle: Bottle) => void;
+    onupdate?: (bottle: Bottle) => void;
   }
 
-  let { bottle, onclick }: Props = $props();
+  let { bottle, onclick, onupdate }: Props = $props();
 
   const quantity = $derived(calculateQuantity(bottle.history));
 
@@ -27,6 +29,20 @@
     [WineType.Rose]: 'Rosé',
     [WineType.Sparkling]: 'Sparkling',
   };
+
+  async function handleConsume(event: MouseEvent): Promise<void> {
+    event.stopPropagation();
+    const snapshot = $state.snapshot(bottle);
+    const updated = await consumeBottle(snapshot);
+    onupdate?.(updated);
+  }
+
+  async function handleRemove(event: MouseEvent): Promise<void> {
+    event.stopPropagation();
+    const snapshot = $state.snapshot(bottle);
+    const updated = await removeBottle(snapshot);
+    onupdate?.(updated);
+  }
 </script>
 
 <div
@@ -54,11 +70,36 @@
     </span>
   </div>
 
-  <div class="mt-2 flex items-center gap-3 text-sm text-gray-600">
-    <span data-testid="bottle-card-vintage">{bottle.vintage}</span>
-    <span data-testid="bottle-card-quantity">{quantity} bottle{quantity !== 1 ? 's' : ''}</span>
-    {#if bottle.rating !== undefined}
-      <span data-testid="bottle-card-rating">{bottle.rating}/10</span>
+  <div class="mt-2 flex items-center justify-between">
+    <div class="flex items-center gap-3 text-sm text-gray-600">
+      <span data-testid="bottle-card-vintage">{bottle.vintage}</span>
+      <span data-testid="bottle-card-quantity">{quantity} bottle{quantity !== 1 ? 's' : ''}</span>
+      {#if bottle.rating !== undefined}
+        <span data-testid="bottle-card-rating">{bottle.rating}/10</span>
+      {/if}
+    </div>
+
+    {#if quantity > 0}
+      <div class="flex gap-1">
+        <button
+          type="button"
+          class="rounded px-1.5 py-0.5 text-xs font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 transition-colors"
+          data-testid="bottle-card-consume"
+          onclick={handleConsume}
+          aria-label="Consume 1 bottle"
+        >
+          −1
+        </button>
+        <button
+          type="button"
+          class="rounded px-1.5 py-0.5 text-xs font-medium text-red-700 bg-red-50 hover:bg-red-100 transition-colors"
+          data-testid="bottle-card-remove"
+          onclick={handleRemove}
+          aria-label="Remove 1 bottle"
+        >
+          ✕
+        </button>
+      </div>
     {/if}
   </div>
 </div>

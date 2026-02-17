@@ -12,16 +12,9 @@ Resolved on 2026-02-16: Playwright will be added in Step 11 for core user flows 
 
 Resolved on 2026-02-16: Autocomplete implemented for name (Step 10), country, and region (Step 12) in the Add Bottle form, and for country and region in the Edit Bottle form (Step 13). Grape variety uses a free-text tag input (GrapeTagInput). See `docs/decisions/20260215-autocomplete-duplicate-prevention.md` and `docs/decisions/20260216-autocomplete-country-region.md`.
 
-# Consume/Remove bottle actions
+# ~~Consume/Remove bottle actions~~ (Resolved)
 
-## Context
-During Add Bottle planning, the form was scoped to add-only. Consuming and removing bottles requires a different UI entry point.
-
-## Dependency
-Depends on Step 13 (Update Bottle Rating & Notes) which provides the bottle detail view where consume/remove actions can be added.
-
-## Details
-Users need a way to mark bottles as consumed or removed. This should be accessible from the bottle detail view (BottleDetail modal) or directly from search results. The action should create a history entry with the appropriate action type (consumed/removed), quantity, and optional notes. Consider a swipe gesture or action menu on mobile for quick access.
+Resolved on 2026-02-17: Planned as Step 14 with quick 1-bottle actions on BottleCard and BottleDetail. See `docs/plans/20260217-quick-consume-remove-actions.md` and `docs/decisions/20260217-quick-consume-remove-actions.md`.
 
 # Editing key fields (name, vintage, type)
 

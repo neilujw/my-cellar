@@ -1,6 +1,6 @@
 # Roadmap
 
-Updated at 2026-02-16
+Updated at 2026-02-17
 
 ## Step 1: Project Setup & Foundation ✅
 - [x] Initialize Svelte + Vite project with mobile-first configuration
@@ -86,12 +86,12 @@ Updated at 2026-02-16
 - [x] Key fields (name, vintage, type) are visible but disabled — no duplicate re-validation needed
 - [x] Update sync to push changes to GitHub via attemptSync()
 
-## Step 14: Quick Consume/Remove Actions
-- [ ] Add consume action button to bottle cards in dashboard view
-- [ ] Add consume action button to bottle cards in search results
-- [ ] Add remove action button to bottle cards in dashboard and search views
-- [ ] Implement quantity input modal for consume/remove actions
-- [ ] Update history and sync changes to GitHub
+## Step 14: Quick Consume/Remove Actions ✅
+- [x] Add consume action button to bottle cards in dashboard view
+- [x] Add consume action button to bottle cards in search results
+- [x] Add remove action button to bottle cards in dashboard and search views
+- [x] Add consume/remove buttons to bottle detail modal
+- [x] Update history and sync changes to GitHub
 
 ## Step 15: Drinking Window (Consume Starting From)
 - [ ] Add "consumeStartingFrom" field to bottle data model (year format: YYYY)

@@ -89,6 +89,8 @@ A personal wine cellar management application that prioritizes data ownership an
 
 **Bottle Detail (Modal)**: Tapping a BottleCard (on Dashboard or Search) opens a full-page modal showing all bottle fields and full history timeline. An Edit button opens an edit modal overlay where non-key fields (rating, notes, location, country, region, grape variety) can be updated. Key fields (name, vintage, type) are visible but disabled.
 
+**Quick Consume/Remove Actions**: Small icon buttons (consume −1, remove ✕) appear on BottleCard and in the BottleDetail modal when stock > 0. Each action immediately creates a history entry (quantity 1, today's date), updates IndexedDB, triggers GitHub sync, and shows a success toast. No confirmation dialog or notes field — optimized for speed.
+
 **Sync Status**: Persistent indicator visible on all views showing current sync state and any conflicts/errors.
 
 ## Out of Scope

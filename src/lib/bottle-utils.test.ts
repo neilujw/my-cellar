@@ -1,6 +1,13 @@
 import { describe, it, expect } from 'vitest';
 
-import { calculateQuantity, findDuplicate, searchBottlesByName } from './bottle-utils';
+import {
+  calculateQuantity,
+  createConsumeHistoryEntry,
+  createRemoveHistoryEntry,
+  applyHistoryEntry,
+  findDuplicate,
+  searchBottlesByName,
+} from './bottle-utils';
 import { HistoryAction, WineType, type Bottle, type HistoryEntry } from './types';
 
 function makeEntry(action: HistoryAction, quantity: number): HistoryEntry {
@@ -58,6 +65,87 @@ describe('calculateQuantity', () => {
     ];
 
     expect(calculateQuantity(history)).toBe(5);
+  });
+});
+
+describe('createConsumeHistoryEntry', () => {
+  it('should return a consumed entry with quantity 1 and today\'s date', () => {
+    const entry = createConsumeHistoryEntry();
+
+    expect(entry.action).toBe(HistoryAction.Consumed);
+    expect(entry.quantity).toBe(1);
+    expect(entry.date).toBe(new Date().toISOString().split('T')[0]);
+  });
+
+  it('should not include price or notes', () => {
+    const entry = createConsumeHistoryEntry();
+
+    expect(entry.price).toBeUndefined();
+    expect(entry.notes).toBeUndefined();
+  });
+});
+
+describe('createRemoveHistoryEntry', () => {
+  it('should return a removed entry with quantity 1 and today\'s date', () => {
+    const entry = createRemoveHistoryEntry();
+
+    expect(entry.action).toBe(HistoryAction.Removed);
+    expect(entry.quantity).toBe(1);
+    expect(entry.date).toBe(new Date().toISOString().split('T')[0]);
+  });
+
+  it('should not include price or notes', () => {
+    const entry = createRemoveHistoryEntry();
+
+    expect(entry.price).toBeUndefined();
+    expect(entry.notes).toBeUndefined();
+  });
+});
+
+describe('applyHistoryEntry', () => {
+  it('should return a new bottle with the entry appended to history', () => {
+    const bottle = makeBottle({
+      history: [makeEntry(HistoryAction.Added, 3)],
+    });
+    const entry = makeEntry(HistoryAction.Consumed, 1);
+
+    const result = applyHistoryEntry(bottle, entry);
+
+    expect(result.history).toHaveLength(2);
+    expect(result.history[1]).toEqual(entry);
+  });
+
+  it('should not mutate the original bottle', () => {
+    const bottle = makeBottle({
+      history: [makeEntry(HistoryAction.Added, 3)],
+    });
+    const entry = makeEntry(HistoryAction.Consumed, 1);
+
+    applyHistoryEntry(bottle, entry);
+
+    expect(bottle.history).toHaveLength(1);
+  });
+
+  it('should preserve all other bottle fields', () => {
+    const bottle = makeBottle({ name: 'Test Wine', vintage: 2020, rating: 8 });
+    const entry = makeEntry(HistoryAction.Consumed, 1);
+
+    const result = applyHistoryEntry(bottle, entry);
+
+    expect(result.name).toBe('Test Wine');
+    expect(result.vintage).toBe(2020);
+    expect(result.rating).toBe(8);
+    expect(result.id).toBe(bottle.id);
+  });
+
+  it('should work on a bottle with empty history', () => {
+    const bottle = makeBottle({ history: [] });
+    const entry = makeEntry(HistoryAction.Added, 5);
+
+    const result = applyHistoryEntry(bottle, entry);
+
+    expect(result.history).toHaveLength(1);
+    expect(result.history[0]).toEqual(entry);
   });
 });
 
