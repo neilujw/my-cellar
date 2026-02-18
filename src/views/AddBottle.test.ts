@@ -73,7 +73,6 @@ describe("AddBottle", () => {
       expect(screen.getByTestId("input-region")).toBeInTheDocument();
       expect(screen.getByTestId("input-quantity")).toBeInTheDocument();
       expect(screen.getByTestId("input-grape")).toBeInTheDocument();
-      expect(screen.getByTestId("input-rating")).toBeInTheDocument();
       expect(screen.getByTestId("input-location")).toBeInTheDocument();
       expect(screen.getByTestId("input-price")).toBeInTheDocument();
       expect(screen.getByTestId("input-currency")).toBeInTheDocument();
@@ -252,7 +251,6 @@ describe("AddBottle", () => {
       expect(screen.getByTestId("input-country")).toHaveValue("France");
       expect(screen.getByTestId("input-region")).toHaveValue("Bordeaux");
       expect(screen.getByTestId("input-vintage")).toHaveValue(2015);
-      expect(screen.getByTestId("input-rating")).toHaveValue(9);
     });
 
     it("should make non-key fields read-only when existing bottle is selected", async () => {
@@ -267,7 +265,6 @@ describe("AddBottle", () => {
 
       expect(screen.getByTestId("input-country")).toBeDisabled();
       expect(screen.getByTestId("input-region")).toBeDisabled();
-      expect(screen.getByTestId("input-rating")).toHaveAttribute("readonly");
       expect(screen.getByTestId("input-location")).toHaveAttribute("readonly");
       expect(screen.getByTestId("input-notes")).toHaveAttribute("readonly");
       expect(screen.getByTestId("input-grape")).toBeDisabled();

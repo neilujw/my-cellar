@@ -53,10 +53,10 @@ describe('SyncButton', () => {
   });
 
   describe('label text', () => {
-    it('should show pending count when pendingCount > 0', () => {
+    it('should show "Pending" when pendingCount > 0', () => {
       render(SyncButton, { props: { syncStatus: 'connected', pendingCount: 3 } });
 
-      expect(screen.getByTestId('sync-button')).toHaveTextContent('3 pending');
+      expect(screen.getByTestId('sync-button')).toHaveTextContent('Pending');
     });
 
     it('should show "Synced" when connected and no pending changes', () => {

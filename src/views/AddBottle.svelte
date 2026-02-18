@@ -172,7 +172,6 @@
 
   <form class="mt-4 space-y-4" onsubmit={(e) => { e.preventDefault(); handleSubmit(); }} data-testid="add-bottle-form">
     <fieldset class="space-y-3">
-      <legend class="text-sm font-semibold text-gray-700">Wine Details</legend>
       <NameAutocomplete
         value={form.name}
         bottles={allBottles}
@@ -222,9 +221,6 @@
     <fieldset class="space-y-3">
       <legend class="text-sm font-semibold text-gray-700">Characteristics</legend>
       <GrapeTagInput tags={form.grapeVariety} onchange={(tags) => { form = { ...form, grapeVariety: tags }; }} disabled={!!selectedBottle} />
-      <FormField label="Rating (1-10)" id="rating" error={errors.rating} errorTestId="error-rating">
-        <input id="rating" type="number" min="1" max="10" class="mt-1 block w-full rounded border border-gray-300 px-3 py-2" readonly={!!selectedBottle} value={form.rating} oninput={(e) => set('rating', e.currentTarget.value)} data-testid="input-rating" />
-      </FormField>
     </fieldset>
 
     <fieldset class="space-y-3">
@@ -236,10 +232,10 @@
 
     <fieldset class="space-y-3">
       <legend class="text-sm font-semibold text-gray-700">Purchase</legend>
-      <FormField label="Quantity *" id="quantity" error={errors.quantity} errorTestId="error-quantity">
-        <input id="quantity" type="number" min="1" class="mt-1 block w-full rounded border border-gray-300 px-3 py-2" value={form.quantity} oninput={(e) => set('quantity', e.currentTarget.value)} data-testid="input-quantity" />
-      </FormField>
-      <div class="grid grid-cols-3 gap-3">
+      <div class="grid grid-cols-4 gap-3">
+        <FormField label="Quantity *" id="quantity" error={errors.quantity} errorTestId="error-quantity">
+          <input id="quantity" type="number" min="1" class="mt-1 block w-full rounded border border-gray-300 px-3 py-2" value={form.quantity} oninput={(e) => set('quantity', e.currentTarget.value)} data-testid="input-quantity" />
+        </FormField>
         <div class="col-span-2">
           <FormField label="Price" id="price" error={errors.priceAmount} errorTestId="error-price">
             <input id="price" type="number" step="0.01" min="0" class="mt-1 block w-full rounded border border-gray-300 px-3 py-2" value={form.priceAmount} oninput={(e) => set('priceAmount', e.currentTarget.value)} data-testid="input-price" />

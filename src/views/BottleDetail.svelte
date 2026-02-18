@@ -82,7 +82,11 @@
             <p class="font-semibold" data-testid="detail-quantity">{quantity} bottle{quantity !== 1 ? 's' : ''}</p>
             {#if quantity > 0}
               <div class="flex gap-1">
-                <button type="button" class="rounded px-1.5 py-0.5 text-xs font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 transition-colors" data-testid="detail-consume" onclick={handleConsume} aria-label="Consume 1 bottle">−1</button>
+                <button type="button" class="rounded p-1 text-amber-700 bg-amber-50 hover:bg-amber-100 transition-colors" data-testid="detail-consume" onclick={handleConsume} aria-label="Consume 1 bottle">
+                  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M8 22h8M12 11v11M6 2h12l-4 9a5 5 0 0 1-8 0L6 2z"/>
+                  </svg>
+                </button>
                 <button type="button" class="rounded px-1.5 py-0.5 text-xs font-medium text-red-700 bg-red-50 hover:bg-red-100 transition-colors" data-testid="detail-remove" onclick={handleRemove} aria-label="Remove 1 bottle">✕</button>
               </div>
             {/if}

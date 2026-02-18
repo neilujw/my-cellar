@@ -20,7 +20,7 @@
   const disabled = $derived(syncStatus === 'syncing' || syncStatus === 'conflict');
 
   const label = $derived.by(() => {
-    if (pendingCount > 0) return `${pendingCount} pending`;
+    if (pendingCount > 0) return 'Pending';
     if (syncStatus === 'syncing') return 'Syncing...';
     if (syncStatus === 'error') return 'Error';
     if (syncStatus === 'conflict') return 'Conflict';
