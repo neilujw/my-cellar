@@ -24,19 +24,19 @@ describe('validateRating', () => {
   it('should return empty string for valid rating', () => {
     expect(validateRating('5')).toBe('');
     expect(validateRating('1')).toBe('');
-    expect(validateRating('10')).toBe('');
+    expect(validateRating('3')).toBe('');
   });
 
   it('should return error for rating below 1', () => {
-    expect(validateRating('0')).toBe('Rating must be between 1 and 10');
+    expect(validateRating('0')).toBe('Rating must be between 1 and 5');
   });
 
-  it('should return error for rating above 10', () => {
-    expect(validateRating('11')).toBe('Rating must be between 1 and 10');
+  it('should return error for rating above 5', () => {
+    expect(validateRating('6')).toBe('Rating must be between 1 and 5');
   });
 
   it('should return error for non-numeric rating', () => {
-    expect(validateRating('abc')).toBe('Rating must be between 1 and 10');
+    expect(validateRating('abc')).toBe('Rating must be between 1 and 5');
   });
 });
 

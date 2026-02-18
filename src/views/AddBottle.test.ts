@@ -1,6 +1,6 @@
 import "fake-indexeddb/auto";
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { render, screen, cleanup } from "@testing-library/svelte";
+import { render, screen, cleanup, fireEvent } from "@testing-library/svelte";
 import { userEvent } from "@testing-library/user-event";
 
 vi.mock("../lib/sync-manager", () => ({
@@ -92,13 +92,30 @@ describe("AddBottle", () => {
   });
 
   describe("validation", () => {
-    it("should display validation errors when submitting empty required fields", async () => {
+    it("should be disabled when required fields are empty", () => {
+      vi.spyOn(storage, "getAllBottles").mockResolvedValue([]);
+      render(AddBottle);
+
+      expect(screen.getByTestId("submit-button")).toBeDisabled();
+    });
+
+    it("should be enabled when all required fields are filled", async () => {
+      vi.spyOn(storage, "getAllBottles").mockResolvedValue([]);
+      render(AddBottle);
+      const user = userEvent.setup();
+
+      await fillNewBottleFields(user);
+
+      expect(screen.getByTestId("submit-button")).not.toBeDisabled();
+    });
+
+    it("should display validation errors when form is submitted with invalid fields", async () => {
       vi.spyOn(storage, "getAllBottles").mockResolvedValue([]);
       render(AddBottle);
       const user = userEvent.setup();
 
       await user.clear(screen.getByTestId("input-quantity"));
-      await user.click(screen.getByTestId("submit-button"));
+      await fireEvent.submit(screen.getByTestId("add-bottle-form"));
 
       expect(screen.getByTestId("error-name")).toBeInTheDocument();
       expect(screen.getByTestId("error-vintage")).toBeInTheDocument();
@@ -111,9 +128,8 @@ describe("AddBottle", () => {
       vi.spyOn(storage, "getAllBottles").mockResolvedValue([]);
       const spy = vi.spyOn(storage, "addBottle");
       render(AddBottle);
-      const user = userEvent.setup();
 
-      await user.click(screen.getByTestId("submit-button"));
+      await fireEvent.submit(screen.getByTestId("add-bottle-form"));
 
       expect(spy).not.toHaveBeenCalled();
     });

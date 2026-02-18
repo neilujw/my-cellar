@@ -1,11 +1,11 @@
 import type { Bottle } from './types';
 
-/** Validates that rating is empty or between 1 and 10. Returns error message or empty string. */
+/** Validates that rating is empty or between 1 and 5. Returns error message or empty string. */
 export function validateRating(rating: string): string {
   if (rating === '') return '';
   const num = Number(rating);
-  if (Number.isNaN(num) || num < 1 || num > 10) {
-    return 'Rating must be between 1 and 10';
+  if (Number.isNaN(num) || num < 1 || num > 5) {
+    return 'Rating must be between 1 and 5';
   }
   return '';
 }

@@ -18,7 +18,7 @@ function makeBottle(overrides: Partial<Bottle> = {}): Bottle {
     region: 'Bordeaux',
     grapeVariety: ['Cabernet Sauvignon', 'Merlot'],
     location: 'Rack A3',
-    rating: 9,
+    rating: 4,
     notes: 'Excellent tannins',
     history: [
       {
@@ -58,7 +58,7 @@ describe('BottleDetail', () => {
       expect(screen.getByTestId('detail-vintage')).toHaveTextContent('Vintage 2015');
       expect(screen.getByTestId('detail-type')).toHaveTextContent('Red');
       expect(screen.getByTestId('detail-quantity')).toHaveTextContent('5 bottles');
-      expect(screen.getByTestId('detail-rating')).toHaveTextContent('9/10');
+      expect(screen.getByTestId('detail-rating')).toHaveTextContent('★★★★☆');
       expect(screen.getByTestId('detail-origin')).toHaveTextContent('France — Bordeaux');
       expect(screen.getByTestId('detail-grapes')).toHaveTextContent('Cabernet Sauvignon');
       expect(screen.getByTestId('detail-grapes')).toHaveTextContent('Merlot');

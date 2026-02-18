@@ -31,6 +31,7 @@
   let allBottles = $state<Bottle[]>([]);
   let selectedBottle = $state<Bottle | null>(null);
   let submitting = $state(false);
+  const isValid = $derived(Object.keys(validateForm(form)).length === 0);
 
   const typeLabels: Record<WineType, string> = {
     [WineType.Red]: 'Red', [WineType.White]: 'White',
@@ -260,7 +261,7 @@
       </FormField>
     </fieldset>
 
-    <button type="submit" class="w-full rounded-lg bg-indigo-600 px-6 py-3 font-semibold text-white transition-colors hover:bg-indigo-700 disabled:opacity-50" disabled={submitting} data-testid="submit-button">
+    <button type="submit" class="w-full rounded-lg bg-indigo-600 px-6 py-3 font-semibold text-white transition-colors hover:bg-indigo-700 disabled:opacity-50" disabled={submitting || !isValid} data-testid="submit-button">
       {#if submitting}Syncing...{:else}Add Bottle{/if}
     </button>
   </form>

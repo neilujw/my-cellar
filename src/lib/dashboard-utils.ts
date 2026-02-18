@@ -59,8 +59,9 @@ export function getTopRegions(bottles: readonly Bottle[], limit: number): Region
   for (const bottle of bottles) {
     const quantity = calculateQuantity(bottle.history);
     if (quantity > 0) {
-      const current = regionMap.get(bottle.region) ?? 0;
-      regionMap.set(bottle.region, current + quantity);
+      const key = bottle.region ?? 'N/A';
+      const current = regionMap.get(key) ?? 0;
+      regionMap.set(key, current + quantity);
     }
   }
 
@@ -95,11 +96,11 @@ export function getRecentActivity(bottles: readonly Bottle[], limit: number): Ac
 
 /**
  * Returns the N most recently active bottles, sorted by latest history date descending.
- * Only includes bottles with at least one history entry.
+ * Only includes bottles with at least one bottle in stock.
  */
 export function getRecentBottles(bottles: readonly Bottle[], limit: number): Bottle[] {
   return [...bottles]
-    .filter((b) => b.history.length > 0)
+    .filter((b) => b.history.length > 0 && calculateQuantity(b.history) > 0)
     .sort((a, b) => {
       const aLatest = a.history.reduce((max, e) => (e.date > max ? e.date : max), '');
       const bLatest = b.history.reduce((max, e) => (e.date > max ? e.date : max), '');

@@ -20,6 +20,11 @@
   const quantity = $derived(calculateQuantity(currentBottle.history));
 
   const typeLabels: Record<WineType, string> = { [WineType.Red]: 'Red', [WineType.White]: 'White', [WineType.Rose]: 'Rosé', [WineType.Sparkling]: 'Sparkling' };
+
+  function renderStars(rating: number): string {
+    const stars = Math.min(5, Math.max(1, Math.round(rating)));
+    return '★'.repeat(stars) + '☆'.repeat(5 - stars);
+  }
   const typeBadgeColors: Record<WineType, string> = { [WineType.Red]: 'bg-red-100 text-red-800', [WineType.White]: 'bg-yellow-100 text-yellow-800', [WineType.Rose]: 'bg-pink-100 text-pink-800', [WineType.Sparkling]: 'bg-amber-100 text-amber-800' };
 
   function handleEditSave(updated: Bottle): void {
@@ -86,7 +91,7 @@
         {#if currentBottle.rating !== undefined}
           <div class="rounded-lg bg-gray-50 p-3">
             <p class="text-xs text-gray-500">Rating</p>
-            <p class="font-semibold" data-testid="detail-rating">{currentBottle.rating}/10</p>
+            <p class="font-semibold" data-testid="detail-rating" aria-label="Rating {currentBottle.rating} out of 5">{renderStars(currentBottle.rating!)}</p>
           </div>
         {/if}
       </div>

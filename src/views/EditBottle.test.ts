@@ -19,7 +19,7 @@ function makeBottle(overrides: Partial<Bottle> = {}): Bottle {
     region: 'Bordeaux',
     grapeVariety: ['Cabernet Sauvignon'],
     location: 'Rack A3',
-    rating: 9,
+    rating: 4,
     notes: 'Excellent tannins',
     history: [
       { date: '2026-01-15', action: HistoryAction.Added, quantity: 6 },
@@ -51,7 +51,7 @@ describe('EditBottle', () => {
       expect(screen.getByTestId('edit-input-name')).toHaveValue('Chateau Margaux');
       expect(screen.getByTestId('edit-input-vintage')).toHaveValue(2015);
       expect(screen.getByTestId('edit-input-type')).toHaveValue('Red');
-      expect(screen.getByTestId('edit-input-rating')).toHaveValue(9);
+      expect(screen.getByTestId('edit-input-rating')).toHaveValue(4);
       expect(screen.getByTestId('edit-input-location')).toHaveValue('Rack A3');
       expect(screen.getByTestId('edit-input-notes')).toHaveValue('Excellent tannins');
       expect(screen.getByTestId('input-edit-country')).toHaveValue('France');
@@ -93,6 +93,7 @@ describe('EditBottle', () => {
       render(EditBottle, { props: { bottle: makeBottle(), onclose: vi.fn(), onsave } });
       const user = userEvent.setup();
 
+      await user.type(screen.getByTestId('edit-input-notes'), ' updated');
       await user.click(screen.getByTestId('edit-save-button'));
 
       expect(storage.updateBottle).toHaveBeenCalledOnce();
@@ -109,11 +110,11 @@ describe('EditBottle', () => {
 
       const ratingInput = screen.getByTestId('edit-input-rating');
       await user.clear(ratingInput);
-      await user.type(ratingInput, '7');
+      await user.type(ratingInput, '3');
       await user.click(screen.getByTestId('edit-save-button'));
 
       const savedBottle = vi.mocked(storage.updateBottle).mock.calls[0][0];
-      expect(savedBottle.rating).toBe(7);
+      expect(savedBottle.rating).toBe(3);
     });
 
     it('should show error toast on save failure', async () => {
@@ -121,6 +122,7 @@ describe('EditBottle', () => {
       render(EditBottle, { props: { bottle: makeBottle(), onclose: vi.fn(), onsave: vi.fn() } });
       const user = userEvent.setup();
 
+      await user.type(screen.getByTestId('edit-input-notes'), ' updated');
       await user.click(screen.getByTestId('edit-save-button'));
 
       expect(toast.toastError).toHaveBeenCalledWith('DB error');
@@ -130,10 +132,28 @@ describe('EditBottle', () => {
       render(EditBottle, { props: { bottle: makeBottle(), onclose: vi.fn(), onsave: vi.fn() } });
       const user = userEvent.setup();
 
+      await user.type(screen.getByTestId('edit-input-notes'), ' updated');
       await user.click(screen.getByTestId('edit-save-button'));
 
       // Only enqueueMutation, no direct push
       expect(syncManager.enqueueMutation).toHaveBeenCalledOnce();
+    });
+
+    it('should not show save button when no fields have been changed', () => {
+      render(EditBottle, { props: { bottle: makeBottle(), onclose: vi.fn(), onsave: vi.fn() } });
+
+      expect(screen.queryByTestId('edit-save-button')).not.toBeInTheDocument();
+    });
+
+    it('should show save button when a field has been changed', async () => {
+      render(EditBottle, { props: { bottle: makeBottle(), onclose: vi.fn(), onsave: vi.fn() } });
+      const user = userEvent.setup();
+
+      expect(screen.queryByTestId('edit-save-button')).not.toBeInTheDocument();
+
+      await user.type(screen.getByTestId('edit-input-location'), 'B1');
+
+      expect(screen.getByTestId('edit-save-button')).toBeInTheDocument();
     });
   });
 
@@ -142,6 +162,7 @@ describe('EditBottle', () => {
       render(EditBottle, { props: { bottle: makeBottle(), onclose: vi.fn(), onsave: vi.fn() } });
       const user = userEvent.setup();
 
+      // Clearing the rating makes the form dirty, so Save Changes appears
       const ratingInput = screen.getByTestId('edit-input-rating');
       await user.clear(ratingInput);
       await user.click(screen.getByTestId('edit-save-button'));
@@ -157,19 +178,19 @@ describe('EditBottle', () => {
       await user.type(screen.getByTestId('edit-input-rating'), '0');
       await fireEvent.submit(screen.getByTestId('edit-bottle-form'));
 
-      expect(screen.getByTestId('error-edit-rating')).toHaveTextContent('Rating must be between 1 and 10');
+      expect(screen.getByTestId('error-edit-rating')).toHaveTextContent('Rating must be between 1 and 5');
       expect(storage.updateBottle).not.toHaveBeenCalled();
     });
 
-    it('should reject rating above 10', async () => {
+    it('should reject rating above 5', async () => {
       const bottle = makeBottle({ rating: undefined });
       render(EditBottle, { props: { bottle, onclose: vi.fn(), onsave: vi.fn() } });
       const user = userEvent.setup();
 
-      await user.type(screen.getByTestId('edit-input-rating'), '11');
+      await user.type(screen.getByTestId('edit-input-rating'), '6');
       await fireEvent.submit(screen.getByTestId('edit-bottle-form'));
 
-      expect(screen.getByTestId('error-edit-rating')).toHaveTextContent('Rating must be between 1 and 10');
+      expect(screen.getByTestId('error-edit-rating')).toHaveTextContent('Rating must be between 1 and 5');
       expect(storage.updateBottle).not.toHaveBeenCalled();
     });
   });
@@ -227,13 +248,13 @@ describe('EditBottle', () => {
       // Act: change rating and save
       const ratingInput = screen.getByTestId('edit-input-rating');
       await user.clear(ratingInput);
-      await user.type(ratingInput, '8');
+      await user.type(ratingInput, '3');
       await user.click(screen.getByTestId('edit-save-button'));
 
       // Assert: bottle was persisted to IDB (no DataCloneError)
       const stored = await storage.getBottle('bottle-1');
       expect(stored).toBeDefined();
-      expect(stored!.rating).toBe(8);
+      expect(stored!.rating).toBe(3);
       expect(stored!.history[0].price).toEqual({ amount: 55, currency: 'EUR' });
       expect(onsave).toHaveBeenCalledOnce();
     });

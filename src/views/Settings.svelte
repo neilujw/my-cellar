@@ -137,10 +137,8 @@
       >
         Save
       </button>
-    </div>
 
-    {#if saved}
-      <div class="border-t border-gray-200 pt-4">
+      {#if saved}
         <button
           type="button"
           class="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700"
@@ -149,8 +147,10 @@
         >
           Disconnect
         </button>
-      </div>
+      {/if}
+    </div>
 
+    {#if saved}
       <SyncSection />
     {/if}
   </form>

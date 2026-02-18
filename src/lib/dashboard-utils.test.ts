@@ -3,6 +3,7 @@ import { describe, it, expect } from 'vitest';
 import {
   formatAction,
   getRecentActivity,
+  getRecentBottles,
   getStatsByType,
   getTotalBottleCount,
   getTopRegions,
@@ -200,6 +201,16 @@ describe('getTopRegions', () => {
     expect(result).toEqual([{ region: 'Bordeaux', count: 5 }]);
   });
 
+  it('should show N/A for bottles without a region', () => {
+    const bottles = [
+      makeBottle({ id: 'a', region: undefined, history: [makeEntry(HistoryAction.Added, 3)] }),
+    ];
+
+    const result = getTopRegions(bottles, 3);
+
+    expect(result).toEqual([{ region: 'N/A', count: 3 }]);
+  });
+
   it('should exclude regions where all bottles have 0 quantity', () => {
     const bottles = [
       makeBottle({
@@ -312,6 +323,57 @@ describe('getRecentActivity', () => {
     const result = getRecentActivity(bottles, 10);
 
     expect(result).toHaveLength(1);
+  });
+});
+
+describe('getRecentBottles', () => {
+  it('should return empty array when bottles array is empty', () => {
+    expect(getRecentBottles([], 5)).toEqual([]);
+  });
+
+  it('should exclude bottles with 0 quantity', () => {
+    const bottles = [
+      makeBottle({
+        id: 'a',
+        name: 'Empty Bottle',
+        history: [
+          makeEntry(HistoryAction.Added, 2, '2026-01-01'),
+          makeEntry(HistoryAction.Consumed, 2, '2026-01-02'),
+        ],
+      }),
+      makeBottle({
+        id: 'b',
+        name: 'In Stock',
+        history: [makeEntry(HistoryAction.Added, 3, '2026-01-01')],
+      }),
+    ];
+
+    const result = getRecentBottles(bottles, 5);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].name).toBe('In Stock');
+  });
+
+  it('should sort by most recent history date', () => {
+    const bottles = [
+      makeBottle({ id: 'a', name: 'Older', history: [makeEntry(HistoryAction.Added, 1, '2026-01-01')] }),
+      makeBottle({ id: 'b', name: 'Newer', history: [makeEntry(HistoryAction.Added, 1, '2026-02-01')] }),
+    ];
+
+    const result = getRecentBottles(bottles, 5);
+
+    expect(result[0].name).toBe('Newer');
+    expect(result[1].name).toBe('Older');
+  });
+
+  it('should limit results to the specified count', () => {
+    const bottles = [
+      makeBottle({ id: 'a', history: [makeEntry(HistoryAction.Added, 1, '2026-01-01')] }),
+      makeBottle({ id: 'b', history: [makeEntry(HistoryAction.Added, 1, '2026-01-02')] }),
+      makeBottle({ id: 'c', history: [makeEntry(HistoryAction.Added, 1, '2026-01-03')] }),
+    ];
+
+    expect(getRecentBottles(bottles, 2)).toHaveLength(2);
   });
 });
 

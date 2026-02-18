@@ -40,6 +40,23 @@
     [WineType.Rose]: 'Rosé', [WineType.Sparkling]: 'Sparkling',
   };
 
+  // Initial values for dirty checking
+  const initialRating = bottle.rating !== undefined ? String(bottle.rating) : '';
+  const initialNotes = bottle.notes ?? '';
+  const initialLocation = bottle.location ?? '';
+  const initialCountry = bottle.country;
+  const initialRegion = bottle.region ?? '';
+  const initialGrapeVariety = JSON.stringify([...bottle.grapeVariety]);
+
+  const isDirty = $derived(
+    rating !== initialRating ||
+    notes !== initialNotes ||
+    location !== initialLocation ||
+    country !== initialCountry ||
+    region !== initialRegion ||
+    JSON.stringify([...grapeVariety]) !== initialGrapeVariety
+  );
+
   async function handleSave(): Promise<void> {
     ratingError = validateRating(rating);
     if (ratingError) return;
@@ -94,8 +111,8 @@
       <fieldset class="space-y-3">
         <legend class="text-sm font-semibold text-gray-700">Characteristics</legend>
         <GrapeTagInput tags={grapeVariety} onchange={(tags) => { grapeVariety = tags; }} />
-        <FormField label="Rating (1-10)" id="edit-rating" error={ratingError} errorTestId="error-edit-rating">
-          <input id="edit-rating" type="number" min="1" max="10" class="mt-1 block w-full rounded border border-gray-300 px-3 py-2" value={rating} oninput={(e) => { rating = e.currentTarget.value; }} data-testid="edit-input-rating" />
+        <FormField label="Rating (1-5)" id="edit-rating" error={ratingError} errorTestId="error-edit-rating">
+          <input id="edit-rating" type="number" min="1" max="5" class="mt-1 block w-full rounded border border-gray-300 px-3 py-2" value={rating} oninput={(e) => { rating = e.currentTarget.value; }} data-testid="edit-input-rating" />
         </FormField>
       </fieldset>
 
@@ -110,13 +127,24 @@
       </fieldset>
 
       <div class="flex gap-3">
-        <button type="submit" class="flex-1 rounded-lg bg-indigo-600 px-4 py-2 font-semibold text-white transition-colors hover:bg-indigo-700 disabled:opacity-50" disabled={saving} data-testid="edit-save-button">
-          {saving ? 'Saving...' : 'Save'}
-        </button>
         <button type="button" class="flex-1 rounded-lg border border-gray-300 px-4 py-2 font-semibold text-gray-700 transition-colors hover:bg-gray-50" onclick={onclose} data-testid="edit-cancel-button">
           Cancel
         </button>
       </div>
     </form>
+
+    {#if isDirty}
+      <div class="sticky bottom-0 -mx-6 -mb-6 border-t border-gray-100 bg-white px-6 pb-6 pt-3 mt-4">
+        <button
+          type="button"
+          class="w-full rounded-lg bg-indigo-600 px-4 py-3 font-semibold text-white transition-colors hover:bg-indigo-700 disabled:opacity-50"
+          disabled={saving}
+          data-testid="edit-save-button"
+          onclick={handleSave}
+        >
+          {saving ? 'Saving...' : 'Save Changes'}
+        </button>
+      </div>
+    {/if}
   </div>
 </div>

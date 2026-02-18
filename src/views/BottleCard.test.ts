@@ -30,14 +30,14 @@ describe('BottleCard', () => {
   });
 
   it('should render all bottle fields', () => {
-    render(BottleCard, { props: { bottle: makeBottle({ rating: 8.5 }) } });
+    render(BottleCard, { props: { bottle: makeBottle({ rating: 4 }) } });
 
     expect(screen.getByTestId('bottle-card-name')).toHaveTextContent('Chateau Margaux');
     expect(screen.getByTestId('bottle-card-origin')).toHaveTextContent('France — Bordeaux');
     expect(screen.getByTestId('bottle-card-type')).toHaveTextContent('Red');
     expect(screen.getByTestId('bottle-card-vintage')).toHaveTextContent('2015');
     expect(screen.getByTestId('bottle-card-quantity')).toHaveTextContent('3 bottles');
-    expect(screen.getByTestId('bottle-card-rating')).toHaveTextContent('8.5/10');
+    expect(screen.getByTestId('bottle-card-rating')).toHaveTextContent('★★★★☆');
   });
 
   it('should not display rating when not set', () => {
@@ -102,15 +102,15 @@ describe('BottleCard', () => {
     });
   });
 
-  describe('consume/remove buttons', () => {
-    it('should show consume and remove buttons when quantity > 0', () => {
+  describe('consume button', () => {
+    it('should show consume button when quantity > 0', () => {
       render(BottleCard, { props: { bottle: makeBottle() } });
 
       expect(screen.getByTestId('bottle-card-consume')).toBeInTheDocument();
-      expect(screen.getByTestId('bottle-card-remove')).toBeInTheDocument();
+      expect(screen.queryByTestId('bottle-card-remove')).not.toBeInTheDocument();
     });
 
-    it('should hide consume and remove buttons when quantity is 0', () => {
+    it('should hide consume button when quantity is 0', () => {
       const bottle = makeBottle({
         history: [
           { date: '2026-01-01', action: HistoryAction.Added, quantity: 1 },
@@ -120,7 +120,6 @@ describe('BottleCard', () => {
       render(BottleCard, { props: { bottle } });
 
       expect(screen.queryByTestId('bottle-card-consume')).not.toBeInTheDocument();
-      expect(screen.queryByTestId('bottle-card-remove')).not.toBeInTheDocument();
     });
 
     it('should call consumeBottle and onupdate when consume is clicked', async () => {
@@ -136,19 +135,6 @@ describe('BottleCard', () => {
       expect(onupdate).toHaveBeenCalledWith(updatedBottle);
     });
 
-    it('should call removeBottle and onupdate when remove is clicked', async () => {
-      const updatedBottle = makeBottle({ id: 'updated' });
-      vi.spyOn(bottleActions, 'removeBottle').mockResolvedValue(updatedBottle);
-      const onupdate = vi.fn();
-      render(BottleCard, { props: { bottle: makeBottle(), onupdate } });
-      const user = userEvent.setup();
-
-      await user.click(screen.getByTestId('bottle-card-remove'));
-
-      expect(bottleActions.removeBottle).toHaveBeenCalledOnce();
-      expect(onupdate).toHaveBeenCalledWith(updatedBottle);
-    });
-
     it('should not trigger card onclick when consume button is clicked', async () => {
       vi.spyOn(bottleActions, 'consumeBottle').mockResolvedValue(makeBottle());
       const onclick = vi.fn();
@@ -156,17 +142,6 @@ describe('BottleCard', () => {
       const user = userEvent.setup();
 
       await user.click(screen.getByTestId('bottle-card-consume'));
-
-      expect(onclick).not.toHaveBeenCalled();
-    });
-
-    it('should not trigger card onclick when remove button is clicked', async () => {
-      vi.spyOn(bottleActions, 'removeBottle').mockResolvedValue(makeBottle());
-      const onclick = vi.fn();
-      render(BottleCard, { props: { bottle: makeBottle(), onclick } });
-      const user = userEvent.setup();
-
-      await user.click(screen.getByTestId('bottle-card-remove'));
 
       expect(onclick).not.toHaveBeenCalled();
     });
