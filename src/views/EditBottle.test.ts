@@ -33,7 +33,7 @@ describe('EditBottle', () => {
     storage.resetDbConnection();
     vi.spyOn(storage, 'getAllBottles').mockResolvedValue([]);
     vi.spyOn(storage, 'updateBottle').mockResolvedValue();
-    vi.spyOn(syncManager, 'attemptSync').mockResolvedValue('connected');
+    vi.spyOn(syncManager, 'enqueueMutation').mockResolvedValue();
     vi.spyOn(toast, 'toastSuccess').mockReturnValue(1);
     vi.spyOn(toast, 'toastError').mockReturnValue(1);
   });
@@ -88,7 +88,7 @@ describe('EditBottle', () => {
   });
 
   describe('saving', () => {
-    it('should call updateBottle and attemptSync on save', async () => {
+    it('should call updateBottle and enqueueMutation on save', async () => {
       const onsave = vi.fn();
       render(EditBottle, { props: { bottle: makeBottle(), onclose: vi.fn(), onsave } });
       const user = userEvent.setup();
@@ -96,7 +96,8 @@ describe('EditBottle', () => {
       await user.click(screen.getByTestId('edit-save-button'));
 
       expect(storage.updateBottle).toHaveBeenCalledOnce();
-      expect(syncManager.attemptSync).toHaveBeenCalledOnce();
+      expect(syncManager.enqueueMutation).toHaveBeenCalledOnce();
+      expect(syncManager.enqueueMutation).toHaveBeenCalledWith('Updated bottle: Chateau Margaux 2015');
       expect(toast.toastSuccess).toHaveBeenCalledWith('Updated Chateau Margaux 2015');
       expect(onsave).toHaveBeenCalledOnce();
     });
@@ -123,6 +124,16 @@ describe('EditBottle', () => {
       await user.click(screen.getByTestId('edit-save-button'));
 
       expect(toast.toastError).toHaveBeenCalledWith('DB error');
+    });
+
+    it('should not call any GitHub API directly', async () => {
+      render(EditBottle, { props: { bottle: makeBottle(), onclose: vi.fn(), onsave: vi.fn() } });
+      const user = userEvent.setup();
+
+      await user.click(screen.getByTestId('edit-save-button'));
+
+      // Only enqueueMutation, no direct push
+      expect(syncManager.enqueueMutation).toHaveBeenCalledOnce();
     });
   });
 
@@ -191,7 +202,7 @@ describe('EditBottle', () => {
       // Restore real storage functions for this block
       vi.restoreAllMocks();
       storage.resetDbConnection();
-      vi.spyOn(syncManager, 'attemptSync').mockResolvedValue('connected');
+      vi.spyOn(syncManager, 'enqueueMutation').mockResolvedValue();
     });
 
     it('should write to real IDB when saving a bottle with price history', async () => {

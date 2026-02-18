@@ -4,7 +4,8 @@ import { render, screen, cleanup, waitFor } from '@testing-library/svelte';
 import { userEvent } from '@testing-library/user-event';
 
 vi.mock('./lib/sync-manager', () => ({
-  processQueue: vi.fn(),
+  manualPush: vi.fn(),
+  manualPull: vi.fn(),
   cancelRetries: vi.fn(),
 }));
 
@@ -23,10 +24,7 @@ vi.mock('./lib/github-settings', async () => {
 });
 
 import App from './App.svelte';
-import { resetDbConnection, clearAll, clearSyncQueue } from './lib/storage';
-import { processQueue } from './lib/sync-manager';
-
-const mockedProcessQueue = vi.mocked(processQueue);
+import { resetDbConnection, clearAll, clearSyncQueue, addToSyncQueue } from './lib/storage';
 
 describe('App', () => {
   beforeEach(async () => {
@@ -48,12 +46,6 @@ describe('App', () => {
       render(App);
 
       expect(screen.getByText('My Cellar')).toBeInTheDocument();
-    });
-
-    it('should render the sync status indicator', () => {
-      render(App);
-
-      expect(screen.getByTestId('sync-status')).toBeInTheDocument();
     });
 
     it('should render 4 tabs in the bottom tab bar', () => {
@@ -108,97 +100,62 @@ describe('App', () => {
     });
   });
 
-  describe('startup sync', () => {
-    it('should process queue on mount when GitHub is configured', async () => {
+  describe('startup behavior', () => {
+    it('should not trigger any automatic push on startup', async () => {
       localStorage.setItem(
         'my-cellar-github-settings',
         JSON.stringify({ repo: 'owner/repo', pat: 'ghp_test' }),
       );
+      await addToSyncQueue({ timestamp: '2026-01-01T00:00:00Z', action: 'test' });
 
-      render(App);
-
-      await waitFor(() => {
-        expect(mockedProcessQueue).toHaveBeenCalled();
-      });
-    });
-
-    it('should not process queue when GitHub is not configured', async () => {
       render(App);
 
       // Give time for any async effects to run
       await new Promise((resolve) => setTimeout(resolve, 50));
 
-      expect(mockedProcessQueue).not.toHaveBeenCalled();
+      // No automatic push should happen
+      const { manualPush } = await import('./lib/sync-manager');
+      expect(manualPush).not.toHaveBeenCalled();
+    });
+
+    it('should not render sync button when GitHub is not configured', () => {
+      render(App);
+
+      expect(screen.queryByTestId('sync-button')).not.toBeInTheDocument();
+    });
+
+    it('should render sync button when GitHub is configured', async () => {
+      localStorage.setItem(
+        'my-cellar-github-settings',
+        JSON.stringify({ repo: 'owner/repo', pat: 'ghp_test' }),
+      );
+
+      render(App);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('sync-button')).toBeInTheDocument();
+      });
+    });
+
+    it('should show pending count badge when queue has items on startup', async () => {
+      localStorage.setItem(
+        'my-cellar-github-settings',
+        JSON.stringify({ repo: 'owner/repo', pat: 'ghp_test' }),
+      );
+      await addToSyncQueue({ timestamp: '2026-01-01T00:00:00Z', action: 'test1' });
+      await addToSyncQueue({ timestamp: '2026-01-01T00:00:00Z', action: 'test2' });
+      await addToSyncQueue({ timestamp: '2026-01-01T00:00:00Z', action: 'test3' });
+
+      render(App);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('sync-badge')).toHaveTextContent('3');
+      });
     });
   });
 
-  describe('sync status', () => {
-    it('should show "Not configured" when no settings exist', () => {
-      render(App);
-
-      expect(screen.getByTestId('sync-status')).toHaveTextContent('Not configured');
-    });
-
-    it('should show "Connected" when settings are saved', () => {
-      localStorage.setItem(
-        'my-cellar-github-settings',
-        JSON.stringify({ repo: 'owner/repo', pat: 'ghp_test' }),
-      );
-
-      render(App);
-
-      expect(screen.getByTestId('sync-status')).toHaveTextContent('Connected');
-    });
-
-    it('should update status when settings-changed event is dispatched', async () => {
-      render(App);
-      expect(screen.getByTestId('sync-status')).toHaveTextContent('Not configured');
-
-      localStorage.setItem(
-        'my-cellar-github-settings',
-        JSON.stringify({ repo: 'owner/repo', pat: 'ghp_test' }),
-      );
-      window.dispatchEvent(new CustomEvent('settings-changed'));
-
-      await waitFor(() => {
-        expect(screen.getByTestId('sync-status')).toHaveTextContent('Connected');
-      });
-    });
-
-    it('should revert to "Not configured" after disconnect', async () => {
-      localStorage.setItem(
-        'my-cellar-github-settings',
-        JSON.stringify({ repo: 'owner/repo', pat: 'ghp_test' }),
-      );
-      render(App);
-      expect(screen.getByTestId('sync-status')).toHaveTextContent('Connected');
-
-      localStorage.removeItem('my-cellar-github-settings');
-      window.dispatchEvent(new CustomEvent('settings-changed'));
-
-      await waitFor(() => {
-        expect(screen.getByTestId('sync-status')).toHaveTextContent('Not configured');
-      });
-    });
-
-    it('should show "Syncing..." when sync-status-changed event is dispatched with syncing', async () => {
-      localStorage.setItem(
-        'my-cellar-github-settings',
-        JSON.stringify({ repo: 'owner/repo', pat: 'ghp_test' }),
-      );
-      render(App);
-      expect(screen.getByTestId('sync-status')).toHaveTextContent('Connected');
-
-      window.dispatchEvent(
-        new CustomEvent('sync-status-changed', { detail: { status: 'syncing', pendingCount: 0 } }),
-      );
-
-      await waitFor(() => {
-        expect(screen.getByTestId('sync-status')).toHaveTextContent('Syncing...');
-      });
-    });
-
-    it('should revert to "Connected" when sync completes', async () => {
+  describe('sync status via events', () => {
+    it('should update sync button when sync-status-changed event is dispatched', async () => {
       localStorage.setItem(
         'my-cellar-github-settings',
         JSON.stringify({ repo: 'owner/repo', pat: 'ghp_test' }),
@@ -210,79 +167,23 @@ describe('App', () => {
       );
 
       await waitFor(() => {
-        expect(screen.getByTestId('sync-status')).toHaveTextContent('Syncing...');
-      });
-
-      window.dispatchEvent(
-        new CustomEvent('sync-status-changed', {
-          detail: { status: 'connected', pendingCount: 0 },
-        }),
-      );
-
-      await waitFor(() => {
-        expect(screen.getByTestId('sync-status')).toHaveTextContent('Connected');
+        expect(screen.getByTestId('sync-button')).toHaveTextContent('Syncing...');
       });
     });
 
-    it('should show "Offline" with pending count when sync fails', async () => {
+    it('should show pending count after mutation events', async () => {
+      localStorage.setItem(
+        'my-cellar-github-settings',
+        JSON.stringify({ repo: 'owner/repo', pat: 'ghp_test' }),
+      );
       render(App);
 
       window.dispatchEvent(
-        new CustomEvent('sync-status-changed', { detail: { status: 'offline', pendingCount: 3 } }),
+        new CustomEvent('sync-status-changed', { detail: { status: 'connected', pendingCount: 2 } }),
       );
 
       await waitFor(() => {
-        expect(screen.getByTestId('sync-status')).toHaveTextContent('Offline (3 pending)');
-      });
-    });
-
-    it('should show "Offline" without count when pending is zero', async () => {
-      render(App);
-
-      window.dispatchEvent(
-        new CustomEvent('sync-status-changed', { detail: { status: 'offline', pendingCount: 0 } }),
-      );
-
-      await waitFor(() => {
-        expect(screen.getByTestId('sync-status')).toHaveTextContent('Offline');
-      });
-    });
-
-    it('should show "Error" with pending count when retries exhausted', async () => {
-      render(App);
-
-      window.dispatchEvent(
-        new CustomEvent('sync-status-changed', { detail: { status: 'error', pendingCount: 2 } }),
-      );
-
-      await waitFor(() => {
-        expect(screen.getByTestId('sync-status')).toHaveTextContent('Error (2 pending)');
-      });
-    });
-
-    it('should show "Error" without count when pending is zero', async () => {
-      render(App);
-
-      window.dispatchEvent(
-        new CustomEvent('sync-status-changed', { detail: { status: 'error', pendingCount: 0 } }),
-      );
-
-      await waitFor(() => {
-        expect(screen.getByTestId('sync-status')).toHaveTextContent('Error');
-      });
-    });
-
-    it('should show "Conflict" with orange styling when conflict is detected', async () => {
-      render(App);
-
-      window.dispatchEvent(
-        new CustomEvent('sync-status-changed', {
-          detail: { status: 'conflict', pendingCount: 0 },
-        }),
-      );
-
-      await waitFor(() => {
-        expect(screen.getByTestId('sync-status')).toHaveTextContent('Conflict');
+        expect(screen.getByTestId('sync-badge')).toHaveTextContent('2');
       });
     });
   });
@@ -327,30 +228,6 @@ describe('App', () => {
 
       await waitFor(() => {
         expect(screen.queryByTestId('conflict-modal')).not.toBeInTheDocument();
-      });
-    });
-
-    it('should return to Connected status after conflict resolution', async () => {
-      localStorage.setItem(
-        'my-cellar-github-settings',
-        JSON.stringify({ repo: 'owner/repo', pat: 'ghp_test' }),
-      );
-      render(App);
-
-      window.dispatchEvent(
-        new CustomEvent('sync-status-changed', {
-          detail: { status: 'conflict', pendingCount: 0 },
-        }),
-      );
-
-      await waitFor(() => {
-        expect(screen.getByTestId('sync-status')).toHaveTextContent('Conflict');
-      });
-
-      window.dispatchEvent(new CustomEvent('conflict-resolved'));
-
-      await waitFor(() => {
-        expect(screen.getByTestId('sync-status')).toHaveTextContent('Connected');
       });
     });
   });

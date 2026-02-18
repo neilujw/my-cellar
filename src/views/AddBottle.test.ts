@@ -4,15 +4,15 @@ import { render, screen, cleanup } from "@testing-library/svelte";
 import { userEvent } from "@testing-library/user-event";
 
 vi.mock("../lib/sync-manager", () => ({
-  attemptSync: vi.fn().mockResolvedValue("connected"),
+  enqueueMutation: vi.fn().mockResolvedValue(undefined),
 }));
 
 import AddBottle from "./AddBottle.svelte";
 import { HistoryAction, WineType, type Bottle } from "../lib/types";
 import * as storage from "../lib/storage";
-import { attemptSync } from "../lib/sync-manager";
+import { enqueueMutation } from "../lib/sync-manager";
 
-const mockedAttemptSync = vi.mocked(attemptSync);
+const mockedEnqueueMutation = vi.mocked(enqueueMutation);
 
 function makeBottle(overrides: Partial<Bottle> = {}): Bottle {
   return {
@@ -136,10 +136,8 @@ describe("AddBottle", () => {
       expect(bottle.type).toBe(WineType.Red);
       expect(window.location.hash).toBe("#/");
     });
-  });
 
-  describe("sync trigger", () => {
-    it("should call attemptSync after adding a new bottle", async () => {
+    it("should always navigate to dashboard after save (no conflict abort)", async () => {
       vi.spyOn(storage, "getAllBottles").mockResolvedValue([]);
       vi.spyOn(storage, "addBottle").mockResolvedValue("new-id");
       render(AddBottle);
@@ -148,12 +146,26 @@ describe("AddBottle", () => {
       await fillNewBottleFields(user);
       await user.click(screen.getByTestId("submit-button"));
 
-      expect(mockedAttemptSync).toHaveBeenCalledWith(
+      expect(window.location.hash).toBe("#/");
+    });
+  });
+
+  describe("sync trigger", () => {
+    it("should call enqueueMutation after adding a new bottle", async () => {
+      vi.spyOn(storage, "getAllBottles").mockResolvedValue([]);
+      vi.spyOn(storage, "addBottle").mockResolvedValue("new-id");
+      render(AddBottle);
+      const user = userEvent.setup();
+
+      await fillNewBottleFields(user);
+      await user.click(screen.getByTestId("submit-button"));
+
+      expect(mockedEnqueueMutation).toHaveBeenCalledWith(
         expect.stringContaining("Petrus"),
       );
     });
 
-    it("should call attemptSync after submitting with existing bottle selected", async () => {
+    it("should call enqueueMutation after submitting with existing bottle selected", async () => {
       const existing = makeBottle();
       vi.spyOn(storage, "getAllBottles").mockResolvedValue([existing]);
       vi.spyOn(storage, "updateBottle").mockResolvedValue();
@@ -170,9 +182,22 @@ describe("AddBottle", () => {
       // Submit
       await user.click(screen.getByTestId("submit-button"));
 
-      expect(mockedAttemptSync).toHaveBeenCalledWith(
+      expect(mockedEnqueueMutation).toHaveBeenCalledWith(
         expect.stringContaining("Chateau Margaux"),
       );
+    });
+
+    it("should not call any GitHub API directly", async () => {
+      vi.spyOn(storage, "getAllBottles").mockResolvedValue([]);
+      vi.spyOn(storage, "addBottle").mockResolvedValue("new-id");
+      render(AddBottle);
+      const user = userEvent.setup();
+
+      await fillNewBottleFields(user);
+      await user.click(screen.getByTestId("submit-button"));
+
+      // Only enqueueMutation is called, no direct push
+      expect(mockedEnqueueMutation).toHaveBeenCalledOnce();
     });
   });
 
@@ -535,35 +560,6 @@ describe("AddBottle", () => {
   });
 
   describe("conflict handling", () => {
-    it("should stay on form when attemptSync returns conflict", async () => {
-      vi.spyOn(storage, "getAllBottles").mockResolvedValue([]);
-      vi.spyOn(storage, "addBottle").mockResolvedValue("new-id");
-      mockedAttemptSync.mockResolvedValue("conflict");
-      window.location.hash = "#/add";
-      render(AddBottle);
-      const user = userEvent.setup();
-
-      await fillNewBottleFields(user);
-      await user.click(screen.getByTestId("submit-button"));
-
-      // Should NOT navigate — still on add form
-      expect(window.location.hash).toBe("#/add");
-      expect(screen.getByTestId("add-bottle-form")).toBeInTheDocument();
-    });
-
-    it("should navigate to dashboard when attemptSync returns connected", async () => {
-      vi.spyOn(storage, "getAllBottles").mockResolvedValue([]);
-      vi.spyOn(storage, "addBottle").mockResolvedValue("new-id");
-      mockedAttemptSync.mockResolvedValue("connected");
-      render(AddBottle);
-      const user = userEvent.setup();
-
-      await fillNewBottleFields(user);
-      await user.click(screen.getByTestId("submit-button"));
-
-      expect(window.location.hash).toBe("#/");
-    });
-
     it("should refresh allBottles and re-detect duplicate on conflict-resolved event", async () => {
       const existing = makeBottle();
       const getAllSpy = vi.spyOn(storage, "getAllBottles").mockResolvedValue([]);

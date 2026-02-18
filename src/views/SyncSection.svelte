@@ -1,14 +1,13 @@
 <script lang="ts">
   /**
-   * Data Sync section — Push and Pull buttons for manual GitHub synchronization.
-   * Displays loading states and success/error feedback messages.
+   * Force sync section — Force Push (create PR) and Force Pull (overwrite local) actions.
+   * Used when normal push/pull via the header SyncButton is insufficient.
    */
   import type { SyncResult, SyncStatus } from '../lib/types';
   import { createGitHubClient } from '../lib/github-client';
-  import { loadSettings, getLastSyncedCommitSha, setLastSyncedCommitSha } from '../lib/github-settings';
-  import { pushToGitHub, pullFromGitHub } from '../lib/github-sync';
+  import { loadSettings, setLastSyncedCommitSha } from '../lib/github-settings';
+  import { createConflictPR, pullFromGitHub } from '../lib/github-sync';
   import { getAllBottles, clearAll, addBottle, clearSyncQueue } from '../lib/storage';
-  import { cancelRetries } from '../lib/sync-manager';
   import { toastSuccess, toastError } from '../lib/toast.svelte';
 
   let syncing = $state(false);
@@ -21,8 +20,8 @@
     );
   }
 
-  /** Pushes all local bottles to GitHub via the sync manager. */
-  async function handlePush(): Promise<void> {
+  /** Creates a PR with local changes on a conflict branch (force push). */
+  async function handleForcePush(): Promise<void> {
     const settings = loadSettings();
     if (!settings) return;
 
@@ -33,28 +32,19 @@
     try {
       const client = createGitHubClient(settings.pat);
       const bottles = await getAllBottles();
-      const lastSyncedSha = getLastSyncedCommitSha();
-      const pushResult = await pushToGitHub(client, settings.repo, bottles, lastSyncedSha);
+      const prResult = await createConflictPR(client, settings.repo, bottles);
 
-      if (pushResult.status === 'success') {
-        if (pushResult.commitSha) {
-          setLastSyncedCommitSha(pushResult.commitSha);
-        }
-        cancelRetries();
-        await clearSyncQueue();
+      if (prResult.status === 'success') {
         dispatchSyncStatus('connected');
-        toastSuccess('Push completed successfully');
-      } else if (pushResult.status === 'conflict') {
-        dispatchSyncStatus('conflict');
-        toastError('Conflict detected — resolve before syncing');
+        toastSuccess('Pull request created successfully');
       } else {
-        dispatchSyncStatus('offline');
-        toastError(pushResult.message);
+        dispatchSyncStatus('error');
+        toastError(prResult.message);
       }
 
-      result = pushResult;
+      result = prResult;
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Push failed unexpectedly';
+      const message = error instanceof Error ? error.message : 'Force push failed unexpectedly';
       result = { status: 'error', message };
       dispatchSyncStatus('error');
       toastError(message);
@@ -63,8 +53,8 @@
     }
   }
 
-  /** Pulls all bottles from GitHub, replacing local data. */
-  async function handlePull(): Promise<void> {
+  /** Pulls all bottles from GitHub, replacing local data (force pull). */
+  async function handleForcePull(): Promise<void> {
     const settings = loadSettings();
     if (!settings) return;
 
@@ -84,21 +74,20 @@
         if (pullResult.commitSha) {
           setLastSyncedCommitSha(pullResult.commitSha);
         }
-        cancelRetries();
         await clearSyncQueue();
       }
 
       if (pullResult.status === 'success') {
         dispatchSyncStatus('connected');
-        toastSuccess('Pull completed successfully');
+        toastSuccess('Force pull completed successfully');
       } else {
-        dispatchSyncStatus(pullResult.bottles?.length ? 'connected' : 'offline');
+        dispatchSyncStatus(pullResult.bottles?.length ? 'connected' : 'error');
         toastError(pullResult.message);
       }
 
       result = { status: pullResult.status, message: pullResult.message };
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Pull failed unexpectedly';
+      const message = error instanceof Error ? error.message : 'Force pull failed unexpectedly';
       result = { status: 'error', message };
       dispatchSyncStatus('error');
       toastError(message);
@@ -109,28 +98,28 @@
 </script>
 
 <div class="border-t border-gray-200 pt-4" data-testid="sync-section">
-  <h3 class="text-lg font-semibold">Data Sync</h3>
-  <p class="mt-1 text-sm text-gray-600">Manually sync your cellar with GitHub.</p>
+  <h3 class="text-lg font-semibold">Force Sync Options</h3>
+  <p class="mt-1 text-sm text-gray-600">Use these options to force-sync your cellar with GitHub.</p>
 
   <div class="mt-3 flex gap-3">
     <button
       type="button"
       class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:opacity-50"
-      onclick={handlePush}
+      onclick={handleForcePush}
       disabled={syncing}
-      data-testid="push-button"
+      data-testid="force-push-button"
     >
-      {syncing ? 'Syncing...' : 'Push'}
+      {syncing ? 'Syncing...' : 'Force Push (create PR)'}
     </button>
 
     <button
       type="button"
       class="rounded-lg bg-gray-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-gray-700 disabled:opacity-50"
-      onclick={handlePull}
+      onclick={handleForcePull}
       disabled={syncing}
-      data-testid="pull-button"
+      data-testid="force-pull-button"
     >
-      {syncing ? 'Syncing...' : 'Pull'}
+      {syncing ? 'Syncing...' : 'Force Pull (overwrite local)'}
     </button>
   </div>
 

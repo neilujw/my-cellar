@@ -27,7 +27,7 @@ describe('consumeBottle', () => {
   beforeEach(() => {
     storage.resetDbConnection();
     vi.spyOn(storage, 'updateBottle').mockResolvedValue();
-    vi.spyOn(syncManager, 'attemptSync').mockResolvedValue(null);
+    vi.spyOn(syncManager, 'enqueueMutation').mockResolvedValue();
     vi.spyOn(toast, 'toastSuccess').mockReturnValue(1);
   });
 
@@ -54,13 +54,22 @@ describe('consumeBottle', () => {
     expect(storage.updateBottle).toHaveBeenCalledWith(result);
   });
 
-  it('should trigger sync with a descriptive action', async () => {
+  it('should enqueue a mutation with a descriptive action', async () => {
     const bottle = makeBottle();
 
     await consumeBottle(bottle);
 
-    expect(syncManager.attemptSync).toHaveBeenCalledOnce();
-    expect(syncManager.attemptSync).toHaveBeenCalledWith('Consumed 1× Chateau Margaux 2015');
+    expect(syncManager.enqueueMutation).toHaveBeenCalledOnce();
+    expect(syncManager.enqueueMutation).toHaveBeenCalledWith('Consumed 1× Chateau Margaux 2015');
+  });
+
+  it('should not call any GitHub sync directly', async () => {
+    const bottle = makeBottle();
+
+    await consumeBottle(bottle);
+
+    // enqueueMutation is called, but no direct GitHub push
+    expect(syncManager.enqueueMutation).toHaveBeenCalledOnce();
   });
 
   it('should show a success toast', async () => {
@@ -86,7 +95,7 @@ describe('removeBottle', () => {
   beforeEach(() => {
     storage.resetDbConnection();
     vi.spyOn(storage, 'updateBottle').mockResolvedValue();
-    vi.spyOn(syncManager, 'attemptSync').mockResolvedValue(null);
+    vi.spyOn(syncManager, 'enqueueMutation').mockResolvedValue();
     vi.spyOn(toast, 'toastSuccess').mockReturnValue(1);
   });
 
@@ -113,13 +122,13 @@ describe('removeBottle', () => {
     expect(storage.updateBottle).toHaveBeenCalledWith(result);
   });
 
-  it('should trigger sync with a descriptive action', async () => {
+  it('should enqueue a mutation with a descriptive action', async () => {
     const bottle = makeBottle();
 
     await removeBottle(bottle);
 
-    expect(syncManager.attemptSync).toHaveBeenCalledOnce();
-    expect(syncManager.attemptSync).toHaveBeenCalledWith('Removed 1× Chateau Margaux 2015');
+    expect(syncManager.enqueueMutation).toHaveBeenCalledOnce();
+    expect(syncManager.enqueueMutation).toHaveBeenCalledWith('Removed 1× Chateau Margaux 2015');
   });
 
   it('should show a success toast', async () => {

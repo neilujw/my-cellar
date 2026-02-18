@@ -10,8 +10,8 @@
   import { navigate } from '../lib/router.svelte';
   import { addBottle, getAllBottles, updateBottle } from '../lib/storage';
   import { calculateQuantity, findDuplicate } from '../lib/bottle-utils';
-  import { attemptSync } from '../lib/sync-manager';
-  import { toastSuccess, toastError, toastInfo } from '../lib/toast.svelte';
+  import { enqueueMutation } from '../lib/sync-manager';
+  import { toastSuccess, toastError } from '../lib/toast.svelte';
   import {
     createBottleFromForm,
     createEmptyFormData,
@@ -128,12 +128,7 @@
         syncDescription = `Added bottle: ${form.name} ${form.vintage}`;
       }
 
-      const status = await attemptSync(syncDescription);
-
-      if (status === 'conflict') {
-        toastInfo('Sync conflict — resolve before continuing');
-        return;
-      }
+      await enqueueMutation(syncDescription);
 
       toastSuccess(selectedBottle
         ? `Updated ${selectedBottle.name} ${selectedBottle.vintage}`

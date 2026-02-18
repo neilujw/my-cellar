@@ -19,21 +19,15 @@ vi.mock('../lib/storage', () => ({
   clearSyncQueue: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock('../lib/sync-manager', () => ({
-  cancelRetries: vi.fn(),
-}));
-
 import { createConflictPR, resolveConflictWithRemote } from '../lib/github-sync';
 import { setLastSyncedCommitSha } from '../lib/github-settings';
 import { clearAll, clearSyncQueue } from '../lib/storage';
-import { cancelRetries } from '../lib/sync-manager';
 
 const mockedCreatePR = vi.mocked(createConflictPR);
 const mockedResolveWithRemote = vi.mocked(resolveConflictWithRemote);
 const mockedSetSha = vi.mocked(setLastSyncedCommitSha);
 const mockedClearAll = vi.mocked(clearAll);
 const mockedClearSyncQueue = vi.mocked(clearSyncQueue);
-const mockedCancelRetries = vi.mocked(cancelRetries);
 
 /** Creates a minimal mock Octokit client. */
 function createMockClient(): unknown {
@@ -147,7 +141,6 @@ describe('ConflictModal', () => {
       await user.click(screen.getByTestId('overwrite-local-button'));
 
       expect(mockedClearAll).toHaveBeenCalled();
-      expect(mockedCancelRetries).toHaveBeenCalled();
       expect(mockedClearSyncQueue).toHaveBeenCalled();
       expect(mockedSetSha).toHaveBeenCalledWith('remote-sha-123');
     });

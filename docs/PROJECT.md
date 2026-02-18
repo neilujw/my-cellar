@@ -21,11 +21,13 @@ A personal wine cellar management application that prioritizes data ownership an
 
 - **Low Maintenance**: No server infrastructure to maintain, no databases to manage, no ongoing hosting costs. Simple static site deployment.
 
-- **Offline Capability**: Data cached locally in browser for offline viewing and editing. Changes sync to GitHub when connection is available. GitHub repo is always the source of truth.
+- **Offline Capability**: Data cached locally in browser for offline viewing and editing. All local changes are queued in IndexedDB. User manually pushes changes to GitHub via the header sync button. GitHub repo is always the source of truth.
 
-- **Sync Status Visibility**: Always display current sync state (in-sync, syncing, conflict, error) so user knows data consistency status.
+- **Manual Sync**: Every mutation (add, consume, edit, remove) queues a sync entry locally without touching GitHub. A header sync button shows the pending change count as a badge. Clicking pushes when items are pending, or pulls when the queue is empty. No automatic retries — the user controls when sync happens.
 
-- **Conflict Resolution**: When sync conflicts occur (outdated local state), provide two options: (1) create pull request for manual resolution, or (2) overwrite local copy with GitHub state.
+- **Sync Status Visibility**: Always display current sync state via the header sync button icon and label (synced, syncing, pending, conflict, error) so user knows data consistency status.
+
+- **Conflict Resolution**: When sync conflicts occur (outdated local state), provide two options: (1) create pull request for manual resolution, or (2) overwrite local copy with GitHub state. Settings also provides "Force Push (create PR)" and "Force Pull (overwrite local)" for recovery scenarios.
 
 - **No External Dependencies**: No third-party services, no external databases, no API keys except GitHub PAT stored locally in browser.
 
@@ -89,9 +91,9 @@ A personal wine cellar management application that prioritizes data ownership an
 
 **Bottle Detail (Modal)**: Tapping a BottleCard (on Dashboard or Search) opens a full-page modal showing all bottle fields and full history timeline. An Edit button opens an edit modal overlay where non-key fields (rating, notes, location, country, region, grape variety) can be updated. Key fields (name, vintage, type) are visible but disabled.
 
-**Quick Consume/Remove Actions**: Small icon buttons (consume −1, remove ✕) appear on BottleCard and in the BottleDetail modal when stock > 0. Each action immediately creates a history entry (quantity 1, today's date), updates IndexedDB, triggers GitHub sync, and shows a success toast. No confirmation dialog or notes field — optimized for speed.
+**Quick Consume/Remove Actions**: Small icon buttons (consume −1, remove ✕) appear on BottleCard and in the BottleDetail modal when stock > 0. Each action immediately creates a history entry (quantity 1, today's date), updates IndexedDB, enqueues a sync mutation, and shows a success toast. No confirmation dialog or notes field — optimized for speed.
 
-**Sync Status**: Persistent indicator visible on all views showing current sync state and any conflicts/errors.
+**Sync Button**: A clickable SVG icon button in the header shows the number of pending changes as a badge. Clicking pushes when items are pending (upload icon), or pulls when the queue is empty (download icon). Shows spinning icon while syncing and warning icon on conflict. Disabled during sync or conflict state.
 
 ## Out of Scope
 

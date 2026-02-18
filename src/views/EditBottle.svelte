@@ -5,7 +5,7 @@
    */
   import { WineType, type Bottle } from '../lib/types';
   import { updateBottle, getAllBottles } from '../lib/storage';
-  import { attemptSync } from '../lib/sync-manager';
+  import { enqueueMutation } from '../lib/sync-manager';
   import { toastSuccess, toastError } from '../lib/toast.svelte';
   import { getUniqueCountries, getUniqueRegions } from '../lib/search-utils';
   import { validateRating, buildUpdatedBottle } from '../lib/edit-bottle-utils';
@@ -49,7 +49,7 @@
       const plainBottle = $state.snapshot(bottle);
       const updated = buildUpdatedBottle(plainBottle, { rating, notes, location, country, region, grapeVariety: $state.snapshot(grapeVariety) });
       await updateBottle(updated);
-      attemptSync(`Updated bottle: ${bottle.name} ${bottle.vintage}`);
+      await enqueueMutation(`Updated bottle: ${bottle.name} ${bottle.vintage}`);
       toastSuccess(`Updated ${bottle.name} ${bottle.vintage}`);
       onsave(updated);
     } catch (error) {

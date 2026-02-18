@@ -9,7 +9,6 @@
   import { createConflictPR, resolveConflictWithRemote } from '../lib/github-sync';
   import { setLastSyncedCommitSha } from '../lib/github-settings';
   import { clearAll, addBottle, clearSyncQueue, getAllBottles } from '../lib/storage';
-  import { cancelRetries } from '../lib/sync-manager';
   import { toastSuccess, toastError } from '../lib/toast.svelte';
 
   interface Props {
@@ -71,7 +70,6 @@
         for (const bottle of overwriteResult.bottles) {
           await addBottle(bottle);
         }
-        cancelRetries();
         await clearSyncQueue();
         if (overwriteResult.commitSha) {
           setLastSyncedCommitSha(overwriteResult.commitSha);

@@ -8,13 +8,14 @@
   import type { SyncStatus } from './lib/types';
   import { loadSettings } from './lib/github-settings';
   import { createGitHubClient } from './lib/github-client';
-  import { processQueue } from './lib/sync-manager';
+  import { getSyncQueueCount } from './lib/storage';
   import Dashboard from './views/Dashboard.svelte';
   import AddBottle from './views/AddBottle.svelte';
   import Search from './views/Search.svelte';
   import Settings from './views/Settings.svelte';
   import ConflictModal from './components/ConflictModal.svelte';
   import ToastContainer from './components/ToastContainer.svelte';
+  import SyncButton from './components/SyncButton.svelte';
 
   interface Tab {
     readonly route: Route;
@@ -42,6 +43,15 @@
     readonly status: SyncStatus;
     readonly pendingCount?: number;
   }
+
+  // Load initial pending count on startup
+  $effect(() => {
+    if (loadSettings()) {
+      getSyncQueueCount().then((count) => {
+        pendingCount = count;
+      });
+    }
+  });
 
   $effect(() => {
     function handleSettingsChanged(): void {
@@ -72,29 +82,6 @@
     };
   });
 
-  const syncStatusConfig: Record<SyncStatus, { label: string; color: string }> = {
-    'not-configured': { label: 'Not configured', color: 'text-gray-400' },
-    connected: { label: 'Connected', color: 'text-green-600' },
-    offline: { label: 'Offline', color: 'text-amber-500' },
-    syncing: { label: 'Syncing...', color: 'text-blue-500' },
-    error: { label: 'Error', color: 'text-red-600' },
-    conflict: { label: 'Conflict', color: 'text-orange-500' },
-  };
-
-  let syncStatusLabel = $derived.by(() => {
-    const base = syncStatusConfig[syncStatus].label;
-    if ((syncStatus === 'offline' || syncStatus === 'error') && pendingCount > 0) {
-      return `${base} (${pendingCount} pending)`;
-    }
-    return base;
-  });
-
-  $effect(() => {
-    if (loadSettings()) {
-      processQueue();
-    }
-  });
-
   function handleTabClick(route: Route): void {
     navigate(route);
   }
@@ -103,7 +90,7 @@
 <div class="flex h-full flex-col">
   <header class="flex items-center justify-between border-b border-gray-200 bg-white px-4 py-3">
     <h1 class="text-lg font-bold">My Cellar</h1>
-    <span class="text-sm {syncStatusConfig[syncStatus].color}" data-testid="sync-status">{syncStatusLabel}</span>
+    <SyncButton {syncStatus} {pendingCount} />
   </header>
 
   <main class="flex-1 overflow-y-auto">
