@@ -1,5 +1,9 @@
-import { type Bottle, type WineType } from './types';
-import { calculateQuantity } from './bottle-utils';
+import { type Bottle, type WineType } from "./types";
+import { calculateQuantity } from "./bottle-utils";
+import {
+  accentInsensitiveIncludes,
+  accentInsensitiveEquals,
+} from "./text-utils";
 
 /** Active search filters. Empty/undefined values mean "no filter". */
 export interface SearchFilters {
@@ -14,15 +18,20 @@ export interface SearchFilters {
 }
 
 /** Available sort options for bottle results. */
-export type SortOption = 'name' | 'vintage' | 'rating' | 'quantity' | 'recentlyAdded';
+export type SortOption =
+  | "name"
+  | "vintage"
+  | "rating"
+  | "quantity"
+  | "recentlyAdded";
 
 /** Returns a SearchFilters with all filters cleared. */
 export function createEmptyFilters(): SearchFilters {
   return {
-    searchText: '',
+    searchText: "",
     types: [],
-    country: '',
-    region: '',
+    country: "",
+    region: "",
     vintageMin: undefined,
     vintageMax: undefined,
     minRating: undefined,
@@ -37,8 +46,8 @@ export function createEmptyFilters(): SearchFilters {
 export function countActiveFilters(filters: SearchFilters): number {
   let count = 0;
   if (filters.types.length > 0) count++;
-  if (filters.country !== '') count++;
-  if (filters.region !== '') count++;
+  if (filters.country !== "") count++;
+  if (filters.region !== "") count++;
   if (filters.vintageMin !== undefined) count++;
   if (filters.vintageMax !== undefined) count++;
   if (filters.minRating !== undefined) count++;
@@ -55,10 +64,10 @@ export function filterBottles(
   filters: SearchFilters,
 ): Bottle[] {
   return bottles.filter((bottle) => {
-    // Text search: case-insensitive partial match on name
+    // Text search: case- and accent-insensitive partial match on name
     if (
-      filters.searchText !== '' &&
-      !bottle.name.toLowerCase().includes(filters.searchText.toLowerCase())
+      filters.searchText !== "" &&
+      !accentInsensitiveIncludes(bottle.name, filters.searchText)
     ) {
       return false;
     }
@@ -68,22 +77,36 @@ export function filterBottles(
       return false;
     }
 
-    // Country filter: exact match
-    if (filters.country !== '' && bottle.country !== filters.country) {
+    // Country filter: accent-insensitive match
+    if (
+      filters.country !== "" &&
+      !accentInsensitiveEquals(bottle.country, filters.country)
+    ) {
       return false;
     }
 
-    // Region filter: exact match
-    if (filters.region !== '' && bottle.region !== filters.region) {
+    // Region filter: accent-insensitive match
+    if (
+      filters.region !== "" &&
+      (!bottle.region ||
+        !accentInsensitiveEquals(bottle.region, filters.region))
+    ) {
       return false;
     }
 
-    // Vintage range filter
-    if (filters.vintageMin !== undefined && bottle.vintage < filters.vintageMin) {
-      return false;
-    }
-    if (filters.vintageMax !== undefined && bottle.vintage > filters.vintageMax) {
-      return false;
+    // Vintage range filter: no-vintage bottles (0) are excluded when a range is active
+    if (filters.vintageMin !== undefined || filters.vintageMax !== undefined) {
+      if (bottle.vintage === 0) return false;
+      if (
+        filters.vintageMin !== undefined &&
+        bottle.vintage < filters.vintageMin
+      )
+        return false;
+      if (
+        filters.vintageMax !== undefined &&
+        bottle.vintage > filters.vintageMax
+      )
+        return false;
     }
 
     // Minimum rating filter: unrated bottles are excluded
@@ -117,17 +140,26 @@ export function filterBottles(
  * - quantity: descending
  * - recentlyAdded: most recent history entry first
  */
-export function sortBottles(bottles: readonly Bottle[], sortOption: SortOption): Bottle[] {
+export function sortBottles(
+  bottles: readonly Bottle[],
+  sortOption: SortOption,
+): Bottle[] {
   const sorted = [...bottles];
 
   switch (sortOption) {
-    case 'name':
+    case "name":
       sorted.sort((a, b) => a.name.localeCompare(b.name));
       break;
-    case 'vintage':
-      sorted.sort((a, b) => a.vintage - b.vintage);
+    case "vintage":
+      sorted.sort((a, b) => {
+        // No-vintage bottles (0) go last
+        if (a.vintage === 0 && b.vintage === 0) return 0;
+        if (a.vintage === 0) return 1;
+        if (b.vintage === 0) return -1;
+        return a.vintage - b.vintage;
+      });
       break;
-    case 'rating':
+    case "rating":
       sorted.sort((a, b) => {
         // Unrated bottles go last
         if (a.rating === undefined && b.rating === undefined) return 0;
@@ -136,12 +168,12 @@ export function sortBottles(bottles: readonly Bottle[], sortOption: SortOption):
         return b.rating - a.rating;
       });
       break;
-    case 'quantity':
+    case "quantity":
       sorted.sort(
         (a, b) => calculateQuantity(b.history) - calculateQuantity(a.history),
       );
       break;
-    case 'recentlyAdded': {
+    case "recentlyAdded": {
       sorted.sort((a, b) => {
         const aLatest = getMostRecentDate(a);
         const bLatest = getMostRecentDate(b);
@@ -156,10 +188,10 @@ export function sortBottles(bottles: readonly Bottle[], sortOption: SortOption):
 
 /** Returns the most recent history entry date, or empty string if no history. */
 function getMostRecentDate(bottle: Bottle): string {
-  if (bottle.history.length === 0) return '';
+  if (bottle.history.length === 0) return "";
   return bottle.history.reduce(
     (latest, entry) => (entry.date > latest ? entry.date : latest),
-    '',
+    "",
   );
 }
 
@@ -171,13 +203,15 @@ export function getUniqueCountries(bottles: readonly Bottle[]): string[] {
 
 /** Parses a numeric input value, returning undefined for empty/invalid strings. */
 export function parseOptionalNumber(value: string): number | undefined {
-  if (value === '') return undefined;
+  if (value === "") return undefined;
   const num = Number(value);
   return Number.isNaN(num) ? undefined : num;
 }
 
 /** Extracts sorted unique region values from all bottles. */
 export function getUniqueRegions(bottles: readonly Bottle[]): string[] {
-  const regions = new Set(bottles.map((b) => b.region).filter((r): r is string => r !== undefined));
+  const regions = new Set(
+    bottles.map((b) => b.region).filter((r): r is string => r !== undefined),
+  );
   return Array.from(regions).sort((a, b) => a.localeCompare(b));
 }

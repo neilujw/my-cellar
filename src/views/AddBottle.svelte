@@ -9,7 +9,7 @@
   import { WineType, type Bottle } from '../lib/types';
   import { navigate } from '../lib/router.svelte';
   import { addBottle, getAllBottles, updateBottle } from '../lib/storage';
-  import { calculateQuantity, findDuplicate } from '../lib/bottle-utils';
+  import { calculateQuantity, findDuplicate, formatVintage } from '../lib/bottle-utils';
   import { enqueueMutation } from '../lib/sync-manager';
   import { toastSuccess, toastError } from '../lib/toast.svelte';
   import {
@@ -30,6 +30,7 @@
   let errors = $state<FormErrors>({});
   let allBottles = $state<Bottle[]>([]);
   let selectedBottle = $state<Bottle | null>(null);
+  let noVintage = $state(false);
   let submitting = $state(false);
   const isValid = $derived(Object.keys(validateForm(form)).length === 0);
 
@@ -54,6 +55,7 @@
 
   /** Auto-fill form fields from a selected bottle. */
   function fillFormFromBottle(bottle: Bottle): void {
+    noVintage = bottle.vintage === 0;
     form = {
       ...form,
       name: bottle.name,
@@ -86,7 +88,7 @@
     const vintage = Number(currentForm.vintage);
     const name = currentForm.name;
 
-    if (!name || !vintage || !type) {
+    if (!name || (!vintage && vintage !== 0) || !type) {
       selectedBottle = null;
       return;
     }
@@ -123,18 +125,18 @@
         const plain = $state.snapshot(selectedBottle);
         const entry = createHistoryEntryFromForm(form);
         await updateBottle({ ...plain, grapeVariety: [...plain.grapeVariety], history: [...plain.history, entry] });
-        syncDescription = `Updated bottle: ${selectedBottle.name} ${selectedBottle.vintage}`;
+        syncDescription = `Updated bottle: ${selectedBottle.name} ${formatVintage(selectedBottle.vintage)}`;
       } else {
         const bottle = createBottleFromForm(form);
         await addBottle(bottle);
-        syncDescription = `Added bottle: ${form.name} ${form.vintage}`;
+        syncDescription = `Added bottle: ${form.name} ${formatVintage(Number(form.vintage))}`;
       }
 
       await enqueueMutation(syncDescription);
 
       toastSuccess(selectedBottle
-        ? `Updated ${selectedBottle.name} ${selectedBottle.vintage}`
-        : `Added ${form.name} ${form.vintage}`);
+        ? `Updated ${selectedBottle.name} ${formatVintage(selectedBottle.vintage)}`
+        : `Added ${form.name} ${formatVintage(Number(form.vintage))}`);
       navigate('/');
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to save bottle';
@@ -166,7 +168,7 @@
   {#if selectedBottle}
     <div class="mt-4 rounded-lg border border-blue-300 bg-blue-50 p-4" data-testid="existing-bottle-banner">
       <p class="font-semibold text-blue-800">Existing bottle selected</p>
-      <p class="mt-1 text-sm text-blue-700">{selectedBottle.name} ({selectedBottle.vintage}, {typeLabels[selectedBottle.type]}) — {calculateQuantity(selectedBottle.history)} in stock</p>
+      <p class="mt-1 text-sm text-blue-700">{selectedBottle.name} ({formatVintage(selectedBottle.vintage)}, {typeLabels[selectedBottle.type]}) — {calculateQuantity(selectedBottle.history)} in stock</p>
       <button type="button" class="mt-2 rounded bg-blue-100 px-3 py-1 text-sm font-medium text-blue-700 hover:bg-blue-200" data-testid="clear-selection" onclick={clearSelection}>Clear selection</button>
     </div>
   {/if}
@@ -182,7 +184,11 @@
       />
       <div class="grid grid-cols-2 gap-3">
         <FormField label="Vintage *" id="vintage" error={errors.vintage} errorTestId="error-vintage">
-          <input id="vintage" type="number" class="mt-1 block w-full rounded border border-gray-300 px-3 py-2" value={form.vintage} oninput={(e) => setKeyField('vintage', e.currentTarget.value)} data-testid="input-vintage" />
+          <input id="vintage" type="number" class="mt-1 block w-full rounded border border-gray-300 px-3 py-2" value={noVintage ? '' : form.vintage} disabled={noVintage} oninput={(e) => setKeyField('vintage', e.currentTarget.value)} data-testid="input-vintage" />
+          <label class="mt-1 flex items-center gap-1.5 text-sm text-gray-600">
+            <input type="checkbox" checked={noVintage} onchange={() => { noVintage = !noVintage; if (noVintage) { setKeyField('vintage', '0'); } else { setKeyField('vintage', ''); } }} data-testid="checkbox-no-vintage" />
+            No vintage
+          </label>
         </FormField>
         <FormField label="Type *" id="type" error={errors.type} errorTestId="error-type">
           <select id="type" class="mt-1 block w-full rounded border border-gray-300 px-3 py-2" value={form.type} onchange={(e) => setKeyField('type', e.currentTarget.value)} data-testid="input-type">

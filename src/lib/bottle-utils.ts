@@ -1,4 +1,10 @@
-import { HistoryAction, type Bottle, type HistoryEntry, type WineType } from './types';
+import {
+  HistoryAction,
+  type Bottle,
+  type HistoryEntry,
+  type WineType,
+} from "./types";
+import { accentInsensitiveEquals } from "./text-utils";
 
 /**
  * Calculates the current quantity of a bottle from its history.
@@ -15,6 +21,11 @@ export function calculateQuantity(history: readonly HistoryEntry[]): number {
   }, 0);
 
   return Math.max(0, total);
+}
+
+/** Formats a vintage for display: returns "N/A" for no-vintage bottles (0), year string otherwise. */
+export function formatVintage(vintage: number): string {
+  return vintage === 0 ? "N/A" : String(vintage);
 }
 
 const MIN_SEARCH_LENGTH = 2;
@@ -43,7 +54,7 @@ export function searchBottlesByName(
  */
 export function createConsumeHistoryEntry(): HistoryEntry {
   return {
-    date: new Date().toISOString().split('T')[0],
+    date: new Date().toISOString().split("T")[0],
     action: HistoryAction.Consumed,
     quantity: 1,
   };
@@ -54,7 +65,7 @@ export function createConsumeHistoryEntry(): HistoryEntry {
  */
 export function createRemoveHistoryEntry(): HistoryEntry {
   return {
-    date: new Date().toISOString().split('T')[0],
+    date: new Date().toISOString().split("T")[0],
     action: HistoryAction.Removed,
     quantity: 1,
   };
@@ -86,12 +97,10 @@ export function findDuplicate(
   vintage: number,
   name: string,
 ): Bottle | undefined {
-  const normalizedName = name.toLowerCase();
-
   return bottles.find(
     (bottle) =>
       bottle.type === type &&
       bottle.vintage === vintage &&
-      bottle.name.toLowerCase() === normalizedName,
+      accentInsensitiveEquals(bottle.name, name),
   );
 }

@@ -16,6 +16,7 @@
     getTotalBottleCount,
     getTopRegions,
   } from '../lib/dashboard-utils';
+  import { formatVintage } from '../lib/bottle-utils';
   import BottleCard from './BottleCard.svelte';
   import BottleDetail from './BottleDetail.svelte';
 
@@ -144,7 +145,7 @@
           {#each recentActivity as entry (entry.date + entry.bottleName + entry.quantity)}
             <li class="rounded bg-gray-50 px-3 py-2 text-sm text-gray-700">
               {entry.date} &bull; {formatAction(entry.action)} {entry.quantity}&times; {entry.bottleName}
-              {entry.vintage}
+              {formatVintage(entry.vintage)}
             </li>
           {/each}
         </ul>

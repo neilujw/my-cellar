@@ -5,7 +5,7 @@ import {
   type Bottle,
   type HistoryEntry,
   type Price,
-} from './types';
+} from "./types";
 
 /** Form field values — all strings for input binding. */
 export interface FormData {
@@ -31,20 +31,20 @@ export type FormErrors = Partial<Record<keyof FormData, string>>;
 /** Returns empty FormData with sensible defaults. */
 export function createEmptyFormData(): FormData {
   return {
-    name: '',
-    vintage: '',
-    type: '',
-    country: '',
-    region: '',
+    name: "",
+    vintage: "",
+    type: "",
+    country: "",
+    region: "",
     grapeVariety: [],
-    location: '',
-    rating: '',
-    notes: '',
-    consumeStartingFrom: '',
-    quantity: '1',
-    priceAmount: '',
+    location: "",
+    rating: "",
+    notes: "",
+    consumeStartingFrom: "",
+    quantity: "1",
+    priceAmount: "",
     priceCurrency: DEFAULT_CURRENCY,
-    historyNotes: '',
+    historyNotes: "",
   };
 }
 
@@ -61,47 +61,60 @@ export function validateForm(data: FormData): FormErrors {
   const errors: FormErrors = {};
 
   if (!data.name.trim()) {
-    errors.name = 'Name is required';
+    errors.name = "Name is required";
   }
 
   const vintage = Number(data.vintage);
-  if (!data.vintage.trim() || !Number.isInteger(vintage) || vintage < MIN_VINTAGE || vintage > MAX_VINTAGE) {
-    errors.vintage = 'Vintage must be a year between 1900 and 2099';
+  const isNoVintage = data.vintage.trim() === "0";
+  if (
+    !isNoVintage &&
+    (!data.vintage.trim() ||
+      !Number.isInteger(vintage) ||
+      vintage < MIN_VINTAGE ||
+      vintage > MAX_VINTAGE)
+  ) {
+    errors.vintage = "Vintage must be a year between 1900 and 2099";
   }
 
   if (!data.type || !Object.values(WineType).includes(data.type as WineType)) {
-    errors.type = 'Wine type is required';
+    errors.type = "Wine type is required";
   }
 
   if (!data.country.trim()) {
-    errors.country = 'Country is required';
+    errors.country = "Country is required";
   }
 
   const quantity = Number(data.quantity);
   if (!Number.isInteger(quantity) || quantity < 1) {
-    errors.quantity = 'Quantity must be at least 1';
+    errors.quantity = "Quantity must be at least 1";
   }
 
   if (data.rating.trim()) {
     const rating = Number(data.rating);
     if (isNaN(rating) || rating < MIN_RATING || rating > MAX_RATING) {
-      errors.rating = 'Rating must be between 1 and 10';
+      errors.rating = "Rating must be between 1 and 10";
     }
   }
 
   if (data.consumeStartingFrom.trim()) {
     const consumeYear = Number(data.consumeStartingFrom);
     if (!Number.isInteger(consumeYear)) {
-      errors.consumeStartingFrom = 'Drink from must be a valid year';
-    } else if (!errors.vintage && data.vintage.trim() && consumeYear < vintage) {
-      errors.consumeStartingFrom = 'Drink from must not be earlier than vintage';
+      errors.consumeStartingFrom = "Drink from must be a valid year";
+    } else if (
+      !errors.vintage &&
+      data.vintage.trim() &&
+      vintage !== 0 &&
+      consumeYear < vintage
+    ) {
+      errors.consumeStartingFrom =
+        "Drink from must not be earlier than vintage";
     }
   }
 
   if (data.priceAmount.trim()) {
     const price = Number(data.priceAmount);
     if (isNaN(price) || price <= 0) {
-      errors.priceAmount = 'Price must be greater than 0';
+      errors.priceAmount = "Price must be greater than 0";
     }
   }
 
@@ -126,7 +139,9 @@ export function createBottleFromForm(data: FormData): Bottle {
     ...(data.location.trim() && { location: data.location.trim() }),
     ...(data.rating.trim() && { rating: Number(data.rating) }),
     ...(data.notes.trim() && { notes: data.notes.trim() }),
-    ...(data.consumeStartingFrom.trim() && { consumeStartingFrom: Number(data.consumeStartingFrom) }),
+    ...(data.consumeStartingFrom.trim() && {
+      consumeStartingFrom: Number(data.consumeStartingFrom),
+    }),
     history: [historyEntry],
   };
 }
@@ -145,7 +160,7 @@ export function createHistoryEntryFromForm(data: FormData): HistoryEntry {
   }
 
   return {
-    date: new Date().toISOString().split('T')[0],
+    date: new Date().toISOString().split("T")[0],
     action: HistoryAction.Added,
     quantity: Number(data.quantity),
     ...(price && { price }),

@@ -1,7 +1,7 @@
 <script lang="ts">
   /** Read-only card displaying a bottle's key information with quick actions. */
   import { WineType, type Bottle } from '../lib/types';
-  import { calculateQuantity } from '../lib/bottle-utils';
+  import { calculateQuantity, formatVintage } from '../lib/bottle-utils';
   import { consumeBottle } from '../lib/bottle-actions';
 
   interface Props {
@@ -78,7 +78,7 @@
 
   <div class="mt-2 flex items-center justify-between">
     <div class="flex items-center gap-3 text-sm text-gray-600">
-      <span data-testid="bottle-card-vintage">{bottle.vintage}</span>
+      <span data-testid="bottle-card-vintage">{formatVintage(bottle.vintage)}</span>
       <span data-testid="bottle-card-quantity">{quantity} bottle{quantity !== 1 ? 's' : ''}</span>
       {#if bottle.rating !== undefined}
         <span data-testid="bottle-card-rating" aria-label="Rating {bottle.rating} out of 5">{renderStars(bottle.rating)}</span>

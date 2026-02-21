@@ -1,7 +1,7 @@
 <script lang="ts">
   /** Full-page detail modal showing all bottle fields and history. */
   import { WineType, type Bottle } from '../lib/types';
-  import { calculateQuantity } from '../lib/bottle-utils';
+  import { calculateQuantity, formatVintage } from '../lib/bottle-utils';
   import { consumeBottle, removeBottle } from '../lib/bottle-actions';
   import HistoryTimeline from './HistoryTimeline.svelte';
   import EditBottle from './EditBottle.svelte';
@@ -71,7 +71,7 @@
             {typeLabels[currentBottle.type]}
           </span>
         </div>
-        <p class="mt-1 text-sm text-gray-500" data-testid="detail-vintage">Vintage {currentBottle.vintage}</p>
+        <p class="mt-1 text-sm text-gray-500" data-testid="detail-vintage">Vintage {formatVintage(currentBottle.vintage)}</p>
       </div>
 
       <!-- Key info grid -->

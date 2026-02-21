@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from "vitest";
 
 import {
   countActiveFilters,
@@ -8,58 +8,67 @@ import {
   getUniqueRegions,
   sortBottles,
   type SearchFilters,
-} from './search-utils';
-import { HistoryAction, WineType, type Bottle } from './types';
+} from "./search-utils";
+import { HistoryAction, WineType, type Bottle } from "./types";
 
 function makeBottle(overrides: Partial<Bottle> = {}): Bottle {
   return {
-    id: 'test-id',
-    name: 'Chateau Margaux',
+    id: "test-id",
+    name: "Chateau Margaux",
     vintage: 2015,
     type: WineType.Red,
-    country: 'France',
-    region: 'Bordeaux',
-    grapeVariety: ['Cabernet Sauvignon'],
-    history: [{ date: '2026-01-01', action: HistoryAction.Added, quantity: 3 }],
+    country: "France",
+    region: "Bordeaux",
+    grapeVariety: ["Cabernet Sauvignon"],
+    history: [{ date: "2026-01-01", action: HistoryAction.Added, quantity: 3 }],
     ...overrides,
   };
 }
 
 const emptyFilters = createEmptyFilters();
 
-describe('filterBottles', () => {
-  describe('text search', () => {
-    it('should filter bottles by name with case-insensitive partial match', () => {
+describe("filterBottles", () => {
+  describe("text search", () => {
+    it("should filter bottles by name with case-insensitive partial match", () => {
       const bottles = [
-        makeBottle({ id: '1', name: 'Chateau Margaux' }),
-        makeBottle({ id: '2', name: 'Petrus' }),
-        makeBottle({ id: '3', name: 'Chateau Latour' }),
+        makeBottle({ id: "1", name: "Chateau Margaux" }),
+        makeBottle({ id: "2", name: "Petrus" }),
+        makeBottle({ id: "3", name: "Chateau Latour" }),
       ];
 
-      const result = filterBottles(bottles, { ...emptyFilters, searchText: 'chateau' });
+      const result = filterBottles(bottles, {
+        ...emptyFilters,
+        searchText: "chateau",
+      });
 
       expect(result).toHaveLength(2);
-      expect(result.map((b) => b.name)).toEqual(['Chateau Margaux', 'Chateau Latour']);
+      expect(result.map((b) => b.name)).toEqual([
+        "Chateau Margaux",
+        "Chateau Latour",
+      ]);
     });
 
-    it('should return all bottles when search text is empty', () => {
+    it("should return all bottles when search text is empty", () => {
       const bottles = [
-        makeBottle({ id: '1', name: 'Chateau Margaux' }),
-        makeBottle({ id: '2', name: 'Petrus' }),
+        makeBottle({ id: "1", name: "Chateau Margaux" }),
+        makeBottle({ id: "2", name: "Petrus" }),
       ];
 
-      const result = filterBottles(bottles, { ...emptyFilters, searchText: '' });
+      const result = filterBottles(bottles, {
+        ...emptyFilters,
+        searchText: "",
+      });
 
       expect(result).toHaveLength(2);
     });
   });
 
-  describe('type filter', () => {
-    it('should filter by a single wine type', () => {
+  describe("type filter", () => {
+    it("should filter by a single wine type", () => {
       const bottles = [
-        makeBottle({ id: '1', type: WineType.Red }),
-        makeBottle({ id: '2', type: WineType.White }),
-        makeBottle({ id: '3', type: WineType.Red }),
+        makeBottle({ id: "1", type: WineType.Red }),
+        makeBottle({ id: "2", type: WineType.White }),
+        makeBottle({ id: "3", type: WineType.Red }),
       ];
 
       const result = filterBottles(bottles, {
@@ -71,11 +80,11 @@ describe('filterBottles', () => {
       expect(result.every((b) => b.type === WineType.Red)).toBe(true);
     });
 
-    it('should filter by multiple wine types', () => {
+    it("should filter by multiple wine types", () => {
       const bottles = [
-        makeBottle({ id: '1', type: WineType.Red }),
-        makeBottle({ id: '2', type: WineType.White }),
-        makeBottle({ id: '3', type: WineType.Sparkling }),
+        makeBottle({ id: "1", type: WineType.Red }),
+        makeBottle({ id: "2", type: WineType.White }),
+        makeBottle({ id: "3", type: WineType.Sparkling }),
       ];
 
       const result = filterBottles(bottles, {
@@ -86,10 +95,10 @@ describe('filterBottles', () => {
       expect(result).toHaveLength(2);
     });
 
-    it('should return all bottles when no types are selected', () => {
+    it("should return all bottles when no types are selected", () => {
       const bottles = [
-        makeBottle({ id: '1', type: WineType.Red }),
-        makeBottle({ id: '2', type: WineType.White }),
+        makeBottle({ id: "1", type: WineType.Red }),
+        makeBottle({ id: "2", type: WineType.White }),
       ];
 
       const result = filterBottles(bottles, { ...emptyFilters, types: [] });
@@ -98,88 +107,100 @@ describe('filterBottles', () => {
     });
   });
 
-  describe('country filter', () => {
-    it('should filter by exact country match', () => {
+  describe("country filter", () => {
+    it("should filter by exact country match", () => {
       const bottles = [
-        makeBottle({ id: '1', country: 'France' }),
-        makeBottle({ id: '2', country: 'Italy' }),
+        makeBottle({ id: "1", country: "France" }),
+        makeBottle({ id: "2", country: "Italy" }),
       ];
 
-      const result = filterBottles(bottles, { ...emptyFilters, country: 'France' });
+      const result = filterBottles(bottles, {
+        ...emptyFilters,
+        country: "France",
+      });
 
       expect(result).toHaveLength(1);
-      expect(result[0].country).toBe('France');
+      expect(result[0].country).toBe("France");
     });
 
-    it('should return all bottles when country filter is empty', () => {
+    it("should return all bottles when country filter is empty", () => {
       const bottles = [
-        makeBottle({ id: '1', country: 'France' }),
-        makeBottle({ id: '2', country: 'Italy' }),
+        makeBottle({ id: "1", country: "France" }),
+        makeBottle({ id: "2", country: "Italy" }),
       ];
 
-      const result = filterBottles(bottles, { ...emptyFilters, country: '' });
+      const result = filterBottles(bottles, { ...emptyFilters, country: "" });
 
       expect(result).toHaveLength(2);
     });
   });
 
-  describe('region filter', () => {
-    it('should filter by exact region match', () => {
+  describe("region filter", () => {
+    it("should filter by exact region match", () => {
       const bottles = [
-        makeBottle({ id: '1', region: 'Bordeaux' }),
-        makeBottle({ id: '2', region: 'Burgundy' }),
+        makeBottle({ id: "1", region: "Bordeaux" }),
+        makeBottle({ id: "2", region: "Burgundy" }),
       ];
 
-      const result = filterBottles(bottles, { ...emptyFilters, region: 'Bordeaux' });
+      const result = filterBottles(bottles, {
+        ...emptyFilters,
+        region: "Bordeaux",
+      });
 
       expect(result).toHaveLength(1);
-      expect(result[0].region).toBe('Bordeaux');
+      expect(result[0].region).toBe("Bordeaux");
     });
 
-    it('should return all bottles when region filter is empty', () => {
+    it("should return all bottles when region filter is empty", () => {
       const bottles = [
-        makeBottle({ id: '1', region: 'Bordeaux' }),
-        makeBottle({ id: '2', region: 'Burgundy' }),
+        makeBottle({ id: "1", region: "Bordeaux" }),
+        makeBottle({ id: "2", region: "Burgundy" }),
       ];
 
-      const result = filterBottles(bottles, { ...emptyFilters, region: '' });
+      const result = filterBottles(bottles, { ...emptyFilters, region: "" });
 
       expect(result).toHaveLength(2);
     });
   });
 
-  describe('vintage range filter', () => {
-    it('should filter with min vintage only', () => {
+  describe("vintage range filter", () => {
+    it("should filter with min vintage only", () => {
       const bottles = [
-        makeBottle({ id: '1', vintage: 2010 }),
-        makeBottle({ id: '2', vintage: 2015 }),
-        makeBottle({ id: '3', vintage: 2020 }),
+        makeBottle({ id: "1", vintage: 2010 }),
+        makeBottle({ id: "2", vintage: 2015 }),
+        makeBottle({ id: "3", vintage: 2020 }),
       ];
 
-      const result = filterBottles(bottles, { ...emptyFilters, vintageMin: 2015 });
+      const result = filterBottles(bottles, {
+        ...emptyFilters,
+        vintageMin: 2015,
+      });
 
       expect(result).toHaveLength(2);
       expect(result.map((b) => b.vintage)).toEqual([2015, 2020]);
     });
 
-    it('should filter with max vintage only', () => {
+    it("should filter with max vintage only", () => {
       const bottles = [
-        makeBottle({ id: '1', vintage: 2010 }),
-        makeBottle({ id: '2', vintage: 2015 }),
-        makeBottle({ id: '3', vintage: 2020 }),
+        makeBottle({ id: "1", vintage: 2010 }),
+        makeBottle({ id: "2", vintage: 2015 }),
+        makeBottle({ id: "3", vintage: 2020 }),
       ];
 
-      const result = filterBottles(bottles, { ...emptyFilters, vintageMax: 2015 });
+      const result = filterBottles(bottles, {
+        ...emptyFilters,
+        vintageMax: 2015,
+      });
 
       expect(result).toHaveLength(2);
       expect(result.map((b) => b.vintage)).toEqual([2010, 2015]);
     });
 
-    it('should filter with both min and max vintage', () => {
+    it("should filter with both min and max vintage", () => {
       const bottles = [
-        makeBottle({ id: '1', vintage: 2010 }),
-        makeBottle({ id: '2', vintage: 2015 }),
-        makeBottle({ id: '3', vintage: 2020 }),
+        makeBottle({ id: "1", vintage: 2010 }),
+        makeBottle({ id: "2", vintage: 2015 }),
+        makeBottle({ id: "3", vintage: 2020 }),
       ];
 
       const result = filterBottles(bottles, {
@@ -192,10 +213,10 @@ describe('filterBottles', () => {
       expect(result[0].vintage).toBe(2015);
     });
 
-    it('should return all bottles when no vintage range is set', () => {
+    it("should return all bottles when no vintage range is set", () => {
       const bottles = [
-        makeBottle({ id: '1', vintage: 2010 }),
-        makeBottle({ id: '2', vintage: 2020 }),
+        makeBottle({ id: "1", vintage: 2010 }),
+        makeBottle({ id: "2", vintage: 2020 }),
       ];
 
       const result = filterBottles(bottles, emptyFilters);
@@ -204,12 +225,12 @@ describe('filterBottles', () => {
     });
   });
 
-  describe('minimum rating filter', () => {
-    it('should filter bottles with rating below minimum', () => {
+  describe("minimum rating filter", () => {
+    it("should filter bottles with rating below minimum", () => {
       const bottles = [
-        makeBottle({ id: '1', rating: 8 }),
-        makeBottle({ id: '2', rating: 5 }),
-        makeBottle({ id: '3', rating: 9 }),
+        makeBottle({ id: "1", rating: 8 }),
+        makeBottle({ id: "2", rating: 5 }),
+        makeBottle({ id: "3", rating: 9 }),
       ];
 
       const result = filterBottles(bottles, { ...emptyFilters, minRating: 7 });
@@ -218,10 +239,10 @@ describe('filterBottles', () => {
       expect(result.map((b) => b.rating)).toEqual([8, 9]);
     });
 
-    it('should exclude unrated bottles when minimum rating filter is active', () => {
+    it("should exclude unrated bottles when minimum rating filter is active", () => {
       const bottles = [
-        makeBottle({ id: '1', rating: 8 }),
-        makeBottle({ id: '2', rating: undefined }),
+        makeBottle({ id: "1", rating: 8 }),
+        makeBottle({ id: "2", rating: undefined }),
       ];
 
       const result = filterBottles(bottles, { ...emptyFilters, minRating: 5 });
@@ -231,229 +252,362 @@ describe('filterBottles', () => {
     });
   });
 
-  describe('ready to drink filter', () => {
-    it('should filter by consumeStartingFrom <= current year and quantity > 0 when readyToDrink is true', () => {
+  describe("ready to drink filter", () => {
+    it("should filter by consumeStartingFrom <= current year and quantity > 0 when readyToDrink is true", () => {
       const currentYear = new Date().getFullYear();
       const bottles = [
-        makeBottle({ id: '1', consumeStartingFrom: currentYear }),
-        makeBottle({ id: '2', consumeStartingFrom: currentYear + 5 }),
-        makeBottle({ id: '3' }),
-      ];
-
-      const result = filterBottles(bottles, { ...emptyFilters, readyToDrink: true });
-
-      expect(result).toHaveLength(1);
-      expect(result[0].id).toBe('1');
-    });
-
-    it('should exclude bottles with 0 quantity even if consumeStartingFrom matches', () => {
-      const bottles = [
-        makeBottle({
-          id: '1',
-          consumeStartingFrom: 2020,
-          history: [
-            { date: '2026-01-01', action: HistoryAction.Added, quantity: 1 },
-            { date: '2026-01-02', action: HistoryAction.Consumed, quantity: 1 },
-          ],
-        }),
-      ];
-
-      const result = filterBottles(bottles, { ...emptyFilters, readyToDrink: true });
-
-      expect(result).toHaveLength(0);
-    });
-
-    it('should return all bottles when readyToDrink is false', () => {
-      const bottles = [
-        makeBottle({ id: '1', consumeStartingFrom: 2020 }),
-        makeBottle({ id: '2' }),
-      ];
-
-      const result = filterBottles(bottles, { ...emptyFilters, readyToDrink: false });
-
-      expect(result).toHaveLength(2);
-    });
-  });
-
-  describe('combined filters', () => {
-    it('should apply multiple filters with AND logic', () => {
-      const bottles = [
-        makeBottle({ id: '1', name: 'Chateau Margaux', type: WineType.Red, country: 'France' }),
-        makeBottle({ id: '2', name: 'Chateau Latour', type: WineType.Red, country: 'France' }),
-        makeBottle({ id: '3', name: 'Chateau Margaux', type: WineType.White, country: 'France' }),
-        makeBottle({ id: '4', name: 'Barolo Riserva', type: WineType.Red, country: 'Italy' }),
+        makeBottle({ id: "1", consumeStartingFrom: currentYear }),
+        makeBottle({ id: "2", consumeStartingFrom: currentYear + 5 }),
+        makeBottle({ id: "3" }),
       ];
 
       const result = filterBottles(bottles, {
         ...emptyFilters,
-        searchText: 'chateau',
-        types: [WineType.Red],
-        country: 'France',
+        readyToDrink: true,
+      });
+
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe("1");
+    });
+
+    it("should exclude bottles with 0 quantity even if consumeStartingFrom matches", () => {
+      const bottles = [
+        makeBottle({
+          id: "1",
+          consumeStartingFrom: 2020,
+          history: [
+            { date: "2026-01-01", action: HistoryAction.Added, quantity: 1 },
+            { date: "2026-01-02", action: HistoryAction.Consumed, quantity: 1 },
+          ],
+        }),
+      ];
+
+      const result = filterBottles(bottles, {
+        ...emptyFilters,
+        readyToDrink: true,
+      });
+
+      expect(result).toHaveLength(0);
+    });
+
+    it("should return all bottles when readyToDrink is false", () => {
+      const bottles = [
+        makeBottle({ id: "1", consumeStartingFrom: 2020 }),
+        makeBottle({ id: "2" }),
+      ];
+
+      const result = filterBottles(bottles, {
+        ...emptyFilters,
+        readyToDrink: false,
       });
 
       expect(result).toHaveLength(2);
-      expect(result.map((b) => b.id)).toEqual(['1', '2']);
+    });
+  });
+
+  describe("accent-insensitive text search", () => {
+    it("should match accented bottle name with plain search text", () => {
+      const bottles = [makeBottle({ id: "1", name: "Château Margaux" })];
+
+      const result = filterBottles(bottles, {
+        ...emptyFilters,
+        searchText: "chateau",
+      });
+
+      expect(result).toHaveLength(1);
+    });
+
+    it("should match plain bottle name with accented search text", () => {
+      const bottles = [makeBottle({ id: "1", name: "Chateau Margaux" })];
+
+      const result = filterBottles(bottles, {
+        ...emptyFilters,
+        searchText: "Château",
+      });
+
+      expect(result).toHaveLength(1);
+    });
+  });
+
+  describe("accent-insensitive country filter", () => {
+    it("should match accented country with plain filter", () => {
+      const bottles = [makeBottle({ id: "1", country: "España" })];
+
+      const result = filterBottles(bottles, {
+        ...emptyFilters,
+        country: "Espana",
+      });
+
+      expect(result).toHaveLength(1);
+    });
+  });
+
+  describe("accent-insensitive region filter", () => {
+    it("should match accented region with plain filter", () => {
+      const bottles = [makeBottle({ id: "1", region: "Côtes du Rhône" })];
+
+      const result = filterBottles(bottles, {
+        ...emptyFilters,
+        region: "Cotes du Rhone",
+      });
+
+      expect(result).toHaveLength(1);
+    });
+  });
+
+  describe("vintage=0 edge cases in filters", () => {
+    it("should exclude no-vintage bottles from vintage range filter", () => {
+      const bottles = [
+        makeBottle({ id: "1", vintage: 2015 }),
+        makeBottle({ id: "2", vintage: 0 }),
+      ];
+
+      const result = filterBottles(bottles, {
+        ...emptyFilters,
+        vintageMin: 2010,
+      });
+
+      expect(result).toHaveLength(1);
+      expect(result[0].vintage).toBe(2015);
+    });
+
+    it("should include no-vintage bottles when no vintage range is set", () => {
+      const bottles = [
+        makeBottle({ id: "1", vintage: 2015 }),
+        makeBottle({ id: "2", vintage: 0 }),
+      ];
+
+      const result = filterBottles(bottles, emptyFilters);
+
+      expect(result).toHaveLength(2);
+    });
+  });
+
+  describe("combined filters", () => {
+    it("should apply multiple filters with AND logic", () => {
+      const bottles = [
+        makeBottle({
+          id: "1",
+          name: "Chateau Margaux",
+          type: WineType.Red,
+          country: "France",
+        }),
+        makeBottle({
+          id: "2",
+          name: "Chateau Latour",
+          type: WineType.Red,
+          country: "France",
+        }),
+        makeBottle({
+          id: "3",
+          name: "Chateau Margaux",
+          type: WineType.White,
+          country: "France",
+        }),
+        makeBottle({
+          id: "4",
+          name: "Barolo Riserva",
+          type: WineType.Red,
+          country: "Italy",
+        }),
+      ];
+
+      const result = filterBottles(bottles, {
+        ...emptyFilters,
+        searchText: "chateau",
+        types: [WineType.Red],
+        country: "France",
+      });
+
+      expect(result).toHaveLength(2);
+      expect(result.map((b) => b.id)).toEqual(["1", "2"]);
     });
   });
 });
 
-describe('sortBottles', () => {
-  it('should sort by name alphabetically ascending', () => {
+describe("sortBottles", () => {
+  it("should sort by name alphabetically ascending", () => {
     const bottles = [
-      makeBottle({ id: '1', name: 'Petrus' }),
-      makeBottle({ id: '2', name: 'Chateau Margaux' }),
-      makeBottle({ id: '3', name: 'Barolo' }),
+      makeBottle({ id: "1", name: "Petrus" }),
+      makeBottle({ id: "2", name: "Chateau Margaux" }),
+      makeBottle({ id: "3", name: "Barolo" }),
     ];
 
-    const result = sortBottles(bottles, 'name');
+    const result = sortBottles(bottles, "name");
 
-    expect(result.map((b) => b.name)).toEqual(['Barolo', 'Chateau Margaux', 'Petrus']);
+    expect(result.map((b) => b.name)).toEqual([
+      "Barolo",
+      "Chateau Margaux",
+      "Petrus",
+    ]);
   });
 
-  it('should sort by vintage ascending', () => {
+  it("should sort by vintage ascending", () => {
     const bottles = [
-      makeBottle({ id: '1', vintage: 2020 }),
-      makeBottle({ id: '2', vintage: 2010 }),
-      makeBottle({ id: '3', vintage: 2015 }),
+      makeBottle({ id: "1", vintage: 2020 }),
+      makeBottle({ id: "2", vintage: 2010 }),
+      makeBottle({ id: "3", vintage: 2015 }),
     ];
 
-    const result = sortBottles(bottles, 'vintage');
+    const result = sortBottles(bottles, "vintage");
 
     expect(result.map((b) => b.vintage)).toEqual([2010, 2015, 2020]);
   });
 
-  it('should sort by rating descending with unrated bottles last', () => {
+  it("should place no-vintage bottles (0) at the end when sorting by vintage", () => {
     const bottles = [
-      makeBottle({ id: '1', rating: 7 }),
-      makeBottle({ id: '2', rating: undefined }),
-      makeBottle({ id: '3', rating: 9 }),
-      makeBottle({ id: '4', rating: undefined }),
+      makeBottle({ id: "1", vintage: 0 }),
+      makeBottle({ id: "2", vintage: 2010 }),
+      makeBottle({ id: "3", vintage: 2020 }),
     ];
 
-    const result = sortBottles(bottles, 'rating');
+    const result = sortBottles(bottles, "vintage");
+
+    expect(result.map((b) => b.vintage)).toEqual([2010, 2020, 0]);
+  });
+
+  it("should sort by rating descending with unrated bottles last", () => {
+    const bottles = [
+      makeBottle({ id: "1", rating: 7 }),
+      makeBottle({ id: "2", rating: undefined }),
+      makeBottle({ id: "3", rating: 9 }),
+      makeBottle({ id: "4", rating: undefined }),
+    ];
+
+    const result = sortBottles(bottles, "rating");
 
     expect(result.map((b) => b.rating)).toEqual([9, 7, undefined, undefined]);
   });
 
-  it('should sort by quantity descending', () => {
+  it("should sort by quantity descending", () => {
     const bottles = [
       makeBottle({
-        id: '1',
-        history: [{ date: '2026-01-01', action: HistoryAction.Added, quantity: 2 }],
-      }),
-      makeBottle({
-        id: '2',
-        history: [{ date: '2026-01-01', action: HistoryAction.Added, quantity: 10 }],
-      }),
-      makeBottle({
-        id: '3',
-        history: [{ date: '2026-01-01', action: HistoryAction.Added, quantity: 5 }],
-      }),
-    ];
-
-    const result = sortBottles(bottles, 'quantity');
-
-    expect(result.map((b) => b.id)).toEqual(['2', '3', '1']);
-  });
-
-  it('should sort by most recent history entry first', () => {
-    const bottles = [
-      makeBottle({
-        id: '1',
-        history: [{ date: '2026-01-01', action: HistoryAction.Added, quantity: 1 }],
-      }),
-      makeBottle({
-        id: '2',
-        history: [{ date: '2026-03-01', action: HistoryAction.Added, quantity: 1 }],
-      }),
-      makeBottle({
-        id: '3',
+        id: "1",
         history: [
-          { date: '2026-01-01', action: HistoryAction.Added, quantity: 1 },
-          { date: '2026-02-15', action: HistoryAction.Added, quantity: 1 },
+          { date: "2026-01-01", action: HistoryAction.Added, quantity: 2 },
+        ],
+      }),
+      makeBottle({
+        id: "2",
+        history: [
+          { date: "2026-01-01", action: HistoryAction.Added, quantity: 10 },
+        ],
+      }),
+      makeBottle({
+        id: "3",
+        history: [
+          { date: "2026-01-01", action: HistoryAction.Added, quantity: 5 },
         ],
       }),
     ];
 
-    const result = sortBottles(bottles, 'recentlyAdded');
+    const result = sortBottles(bottles, "quantity");
 
-    expect(result.map((b) => b.id)).toEqual(['2', '3', '1']);
+    expect(result.map((b) => b.id)).toEqual(["2", "3", "1"]);
   });
 
-  it('should not mutate the original array', () => {
+  it("should sort by most recent history entry first", () => {
     const bottles = [
-      makeBottle({ id: '1', name: 'Petrus' }),
-      makeBottle({ id: '2', name: 'Barolo' }),
+      makeBottle({
+        id: "1",
+        history: [
+          { date: "2026-01-01", action: HistoryAction.Added, quantity: 1 },
+        ],
+      }),
+      makeBottle({
+        id: "2",
+        history: [
+          { date: "2026-03-01", action: HistoryAction.Added, quantity: 1 },
+        ],
+      }),
+      makeBottle({
+        id: "3",
+        history: [
+          { date: "2026-01-01", action: HistoryAction.Added, quantity: 1 },
+          { date: "2026-02-15", action: HistoryAction.Added, quantity: 1 },
+        ],
+      }),
     ];
 
-    const result = sortBottles(bottles, 'name');
+    const result = sortBottles(bottles, "recentlyAdded");
+
+    expect(result.map((b) => b.id)).toEqual(["2", "3", "1"]);
+  });
+
+  it("should not mutate the original array", () => {
+    const bottles = [
+      makeBottle({ id: "1", name: "Petrus" }),
+      makeBottle({ id: "2", name: "Barolo" }),
+    ];
+
+    const result = sortBottles(bottles, "name");
 
     expect(result).not.toBe(bottles);
-    expect(bottles[0].name).toBe('Petrus');
+    expect(bottles[0].name).toBe("Petrus");
   });
 });
 
-describe('getUniqueCountries', () => {
-  it('should return sorted unique countries', () => {
+describe("getUniqueCountries", () => {
+  it("should return sorted unique countries", () => {
     const bottles = [
-      makeBottle({ id: '1', country: 'Italy' }),
-      makeBottle({ id: '2', country: 'France' }),
-      makeBottle({ id: '3', country: 'France' }),
-      makeBottle({ id: '4', country: 'Spain' }),
+      makeBottle({ id: "1", country: "Italy" }),
+      makeBottle({ id: "2", country: "France" }),
+      makeBottle({ id: "3", country: "France" }),
+      makeBottle({ id: "4", country: "Spain" }),
     ];
 
     const result = getUniqueCountries(bottles);
 
-    expect(result).toEqual(['France', 'Italy', 'Spain']);
+    expect(result).toEqual(["France", "Italy", "Spain"]);
   });
 
-  it('should return empty array for no bottles', () => {
+  it("should return empty array for no bottles", () => {
     expect(getUniqueCountries([])).toEqual([]);
   });
 });
 
-describe('getUniqueRegions', () => {
-  it('should return sorted unique regions', () => {
+describe("getUniqueRegions", () => {
+  it("should return sorted unique regions", () => {
     const bottles = [
-      makeBottle({ id: '1', region: 'Tuscany' }),
-      makeBottle({ id: '2', region: 'Bordeaux' }),
-      makeBottle({ id: '3', region: 'Bordeaux' }),
-      makeBottle({ id: '4', region: 'Rioja' }),
+      makeBottle({ id: "1", region: "Tuscany" }),
+      makeBottle({ id: "2", region: "Bordeaux" }),
+      makeBottle({ id: "3", region: "Bordeaux" }),
+      makeBottle({ id: "4", region: "Rioja" }),
     ];
 
     const result = getUniqueRegions(bottles);
 
-    expect(result).toEqual(['Bordeaux', 'Rioja', 'Tuscany']);
+    expect(result).toEqual(["Bordeaux", "Rioja", "Tuscany"]);
   });
 
-  it('should return empty array for no bottles', () => {
+  it("should return empty array for no bottles", () => {
     expect(getUniqueRegions([])).toEqual([]);
   });
 
-  it('should filter out undefined regions', () => {
+  it("should filter out undefined regions", () => {
     const bottles = [
-      makeBottle({ id: '1', region: 'Bordeaux' }),
-      makeBottle({ id: '2', region: undefined }),
-      makeBottle({ id: '3', region: 'Tuscany' }),
+      makeBottle({ id: "1", region: "Bordeaux" }),
+      makeBottle({ id: "2", region: undefined }),
+      makeBottle({ id: "3", region: "Tuscany" }),
     ];
 
     const result = getUniqueRegions(bottles);
 
-    expect(result).toEqual(['Bordeaux', 'Tuscany']);
+    expect(result).toEqual(["Bordeaux", "Tuscany"]);
   });
 });
 
-describe('countActiveFilters', () => {
-  it('should return 0 for empty filters', () => {
+describe("countActiveFilters", () => {
+  it("should return 0 for empty filters", () => {
     expect(countActiveFilters(createEmptyFilters())).toBe(0);
   });
 
-  it('should count each active filter criterion', () => {
+  it("should count each active filter criterion", () => {
     const filters: SearchFilters = {
-      searchText: 'test',
+      searchText: "test",
       types: [WineType.Red],
-      country: 'France',
-      region: '',
+      country: "France",
+      region: "",
       vintageMin: 2010,
       vintageMax: undefined,
       minRating: 7,
@@ -464,7 +618,7 @@ describe('countActiveFilters', () => {
     expect(countActiveFilters(filters)).toBe(4);
   });
 
-  it('should count readyToDrink when enabled', () => {
+  it("should count readyToDrink when enabled", () => {
     const filters: SearchFilters = {
       ...createEmptyFilters(),
       readyToDrink: true,

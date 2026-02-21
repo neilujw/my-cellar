@@ -110,7 +110,8 @@ Updated at 2026-02-21
 - [x] Add "Bottles to Drink This Year" section on dashboard (consumeStartingFrom ≤ current year)
 - [x] Add "Ready to drink" toggle filter in Search
 
-## Step 17: UX Polish — Vintage & Search
-- [ ] Accept vintage value `0` as "no vintage" in Add Bottle form (e.g., via a "No vintage" checkbox or entering 0)
-- [ ] Display "N/A" instead of `0` for vintage everywhere a bottle is shown (cards, detail modal, search results, dashboard)
-- [ ] Implement accent-insensitive name search: normalize accented characters to ASCII equivalents before comparison (e.g., é → e, à → a, ü → u) so searching "e" matches "é" and vice versa
+## Step 17: UX Polish — Vintage & Search ✅
+- [x] Accept vintage value `0` as "no vintage" in Add Bottle form via a "No vintage" checkbox
+- [x] Display "N/A" instead of `0` for vintage everywhere a bottle is shown (cards, detail modal, search results, dashboard)
+- [x] Implement accent-insensitive text matching across name search, country/region filters, and duplicate detection
+- [x] No-vintage bottles excluded from vintage range filters and sorted last by vintage
