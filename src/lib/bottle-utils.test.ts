@@ -286,6 +286,42 @@ describe("searchBottlesByName", () => {
 
     expect(results).toHaveLength(1);
   });
+
+  it("should match accent-insensitively (query without accents matches accented name)", () => {
+    const bottles = [makeBottle({ name: "Château Margaux" })];
+
+    const results = searchBottlesByName(bottles, "Chateau");
+
+    expect(results).toHaveLength(1);
+  });
+
+  it("should match accent-insensitively (accented query matches plain name)", () => {
+    const bottles = [makeBottle({ name: "Chateau Margaux" })];
+
+    const results = searchBottlesByName(bottles, "Châ");
+
+    expect(results).toHaveLength(1);
+  });
+
+  it("should match all query words regardless of order in name", () => {
+    const bottles = [makeBottle({ name: "Chateau Margaux" })];
+
+    const results = searchBottlesByName(bottles, "margaux chateau");
+
+    expect(results).toHaveLength(1);
+  });
+
+  it("should require all words to match", () => {
+    const bottles = [
+      makeBottle({ id: "1", name: "Chateau Margaux" }),
+      makeBottle({ id: "2", name: "Chateau Latour" }),
+    ];
+
+    const results = searchBottlesByName(bottles, "chateau mar");
+
+    expect(results).toHaveLength(1);
+    expect(results[0].name).toBe("Chateau Margaux");
+  });
 });
 
 describe("formatVintage", () => {

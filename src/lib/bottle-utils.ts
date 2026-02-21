@@ -4,7 +4,7 @@ import {
   type HistoryEntry,
   type WineType,
 } from "./types";
-import { accentInsensitiveEquals } from "./text-utils";
+import { accentInsensitiveEquals, normalizeAccents } from "./text-utils";
 
 /**
  * Calculates the current quantity of a bottle from its history.
@@ -31,9 +31,10 @@ export function formatVintage(vintage: number): string {
 const MIN_SEARCH_LENGTH = 2;
 
 /**
- * Searches bottles by name using case-insensitive "contains" matching.
+ * Searches bottles by name, matching each query word independently anywhere in the name.
  *
- * Returns matching bottles sorted alphabetically by name.
+ * Matching is case- and accent-insensitive. All words in the query must be present
+ * in the name (in any order). Returns results sorted alphabetically by name.
  * Returns an empty array if the query is fewer than 2 characters.
  */
 export function searchBottlesByName(
@@ -42,10 +43,13 @@ export function searchBottlesByName(
 ): Bottle[] {
   if (query.length < MIN_SEARCH_LENGTH) return [];
 
-  const normalizedQuery = query.toLowerCase();
+  const words = normalizeAccents(query).toLowerCase().split(/\s+/).filter(Boolean);
 
   return bottles
-    .filter((bottle) => bottle.name.toLowerCase().includes(normalizedQuery))
+    .filter((bottle) => {
+      const normalizedName = normalizeAccents(bottle.name).toLowerCase();
+      return words.every((word) => normalizedName.includes(word));
+    })
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
