@@ -13,6 +13,12 @@
   let { bottle, onclick, onupdate }: Props = $props();
 
   const quantity = $derived(calculateQuantity(bottle.history));
+  const currentYear = new Date().getFullYear();
+  const readyToDrink = $derived(
+    bottle.consumeStartingFrom !== undefined &&
+    bottle.consumeStartingFrom <= currentYear &&
+    quantity > 0
+  );
 
   /** Color classes for wine type badges. */
   const typeBadgeColors: Record<WineType, string> = {
@@ -76,6 +82,9 @@
       <span data-testid="bottle-card-quantity">{quantity} bottle{quantity !== 1 ? 's' : ''}</span>
       {#if bottle.rating !== undefined}
         <span data-testid="bottle-card-rating" aria-label="Rating {bottle.rating} out of 5">{renderStars(bottle.rating)}</span>
+      {/if}
+      {#if readyToDrink}
+        <span class="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800" data-testid="bottle-card-ready">Ready to drink</span>
       {/if}
     </div>
 

@@ -79,5 +79,6 @@ export interface Bottle {
   readonly location?: string;
   readonly rating?: number;
   readonly notes?: string;
+  readonly consumeStartingFrom?: number;
   readonly history: readonly HistoryEntry[];
 }

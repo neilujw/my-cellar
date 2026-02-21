@@ -18,6 +18,7 @@ export interface FormData {
   readonly location: string;
   readonly rating: string;
   readonly notes: string;
+  readonly consumeStartingFrom: string;
   readonly quantity: string;
   readonly priceAmount: string;
   readonly priceCurrency: string;
@@ -39,6 +40,7 @@ export function createEmptyFormData(): FormData {
     location: '',
     rating: '',
     notes: '',
+    consumeStartingFrom: '',
     quantity: '1',
     priceAmount: '',
     priceCurrency: DEFAULT_CURRENCY,
@@ -87,6 +89,15 @@ export function validateForm(data: FormData): FormErrors {
     }
   }
 
+  if (data.consumeStartingFrom.trim()) {
+    const consumeYear = Number(data.consumeStartingFrom);
+    if (!Number.isInteger(consumeYear)) {
+      errors.consumeStartingFrom = 'Drink from must be a valid year';
+    } else if (!errors.vintage && data.vintage.trim() && consumeYear < vintage) {
+      errors.consumeStartingFrom = 'Drink from must not be earlier than vintage';
+    }
+  }
+
   if (data.priceAmount.trim()) {
     const price = Number(data.priceAmount);
     if (isNaN(price) || price <= 0) {
@@ -115,6 +126,7 @@ export function createBottleFromForm(data: FormData): Bottle {
     ...(data.location.trim() && { location: data.location.trim() }),
     ...(data.rating.trim() && { rating: Number(data.rating) }),
     ...(data.notes.trim() && { notes: data.notes.trim() }),
+    ...(data.consumeStartingFrom.trim() && { consumeStartingFrom: Number(data.consumeStartingFrom) }),
     history: [historyEntry],
   };
 }

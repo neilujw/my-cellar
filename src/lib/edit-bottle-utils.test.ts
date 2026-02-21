@@ -50,6 +50,7 @@ describe('buildUpdatedBottle', () => {
       country: 'Italy',
       region: 'Tuscany',
       grapeVariety: ['Sangiovese'],
+      consumeStartingFrom: '2028',
     });
 
     expect(updated.name).toBe('Chateau Margaux');
@@ -61,10 +62,11 @@ describe('buildUpdatedBottle', () => {
     expect(updated.country).toBe('Italy');
     expect(updated.region).toBe('Tuscany');
     expect(updated.grapeVariety).toEqual(['Sangiovese']);
+    expect(updated.consumeStartingFrom).toBe(2028);
   });
 
   it('should set optional fields to undefined when empty', () => {
-    const original = makeBottle({ rating: 8, notes: 'test', location: 'A1' });
+    const original = makeBottle({ rating: 8, notes: 'test', location: 'A1', consumeStartingFrom: 2025 });
     const updated = buildUpdatedBottle(original, {
       rating: '',
       notes: '',
@@ -72,11 +74,13 @@ describe('buildUpdatedBottle', () => {
       country: 'France',
       region: '',
       grapeVariety: [],
+      consumeStartingFrom: '',
     });
 
     expect(updated.rating).toBeUndefined();
     expect(updated.notes).toBeUndefined();
     expect(updated.location).toBeUndefined();
     expect(updated.region).toBeUndefined();
+    expect(updated.consumeStartingFrom).toBeUndefined();
   });
 });

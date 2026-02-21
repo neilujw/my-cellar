@@ -45,7 +45,7 @@ describe('EditBottle', () => {
 
   describe('pre-filling', () => {
     it('should pre-fill all fields with current bottle values', () => {
-      const bottle = makeBottle();
+      const bottle = makeBottle({ consumeStartingFrom: 2028 });
       render(EditBottle, { props: { bottle, onclose: vi.fn(), onsave: vi.fn() } });
 
       expect(screen.getByTestId('edit-input-name')).toHaveValue('Chateau Margaux');
@@ -56,16 +56,18 @@ describe('EditBottle', () => {
       expect(screen.getByTestId('edit-input-notes')).toHaveValue('Excellent tannins');
       expect(screen.getByTestId('input-edit-country')).toHaveValue('France');
       expect(screen.getByTestId('input-edit-region')).toHaveValue('Bordeaux');
+      expect(screen.getByTestId('edit-input-consume-starting-from')).toHaveValue(2028);
     });
 
     it('should handle empty optional fields', () => {
-      const bottle = makeBottle({ rating: undefined, notes: undefined, location: undefined, region: undefined });
+      const bottle = makeBottle({ rating: undefined, notes: undefined, location: undefined, region: undefined, consumeStartingFrom: undefined });
       render(EditBottle, { props: { bottle, onclose: vi.fn(), onsave: vi.fn() } });
 
       expect(screen.getByTestId('edit-input-rating')).toHaveValue(null);
       expect(screen.getByTestId('edit-input-location')).toHaveValue('');
       expect(screen.getByTestId('edit-input-notes')).toHaveValue('');
       expect(screen.getByTestId('input-edit-region')).toHaveValue('');
+      expect(screen.getByTestId('edit-input-consume-starting-from')).toHaveValue(null);
     });
   });
 

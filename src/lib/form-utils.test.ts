@@ -96,6 +96,36 @@ describe('validateForm', () => {
     expect(errors.priceAmount).toBeUndefined();
   });
 
+  it('should reject consumeStartingFrom earlier than vintage', () => {
+    const errors = validateForm(validFormData({ vintage: '2020', consumeStartingFrom: '2019' }));
+
+    expect(errors.consumeStartingFrom).toBe('Drink from must not be earlier than vintage');
+  });
+
+  it('should accept consumeStartingFrom equal to vintage', () => {
+    const errors = validateForm(validFormData({ vintage: '2020', consumeStartingFrom: '2020' }));
+
+    expect(errors.consumeStartingFrom).toBeUndefined();
+  });
+
+  it('should accept consumeStartingFrom later than vintage', () => {
+    const errors = validateForm(validFormData({ vintage: '2020', consumeStartingFrom: '2025' }));
+
+    expect(errors.consumeStartingFrom).toBeUndefined();
+  });
+
+  it('should allow empty consumeStartingFrom', () => {
+    const errors = validateForm(validFormData({ consumeStartingFrom: '' }));
+
+    expect(errors.consumeStartingFrom).toBeUndefined();
+  });
+
+  it('should reject non-integer consumeStartingFrom', () => {
+    const errors = validateForm(validFormData({ consumeStartingFrom: 'abc' }));
+
+    expect(errors.consumeStartingFrom).toBe('Drink from must be a valid year');
+  });
+
   it('should return multiple errors at once', () => {
     const errors = validateForm(createEmptyFormData());
 
@@ -151,6 +181,18 @@ describe('createBottleFromForm', () => {
     const bottle = createBottleFromForm(validFormData({ name: '  Chateau Margaux  ' }));
 
     expect(bottle.name).toBe('Chateau Margaux');
+  });
+
+  it('should include consumeStartingFrom when provided', () => {
+    const bottle = createBottleFromForm(validFormData({ consumeStartingFrom: '2025' }));
+
+    expect(bottle.consumeStartingFrom).toBe(2025);
+  });
+
+  it('should omit consumeStartingFrom when empty', () => {
+    const bottle = createBottleFromForm(validFormData({ consumeStartingFrom: '' }));
+
+    expect(bottle.consumeStartingFrom).toBeUndefined();
   });
 
   it('should include price in history entry when provided', () => {

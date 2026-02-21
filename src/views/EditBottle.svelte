@@ -27,6 +27,7 @@
   let country = $state(bottle.country);
   let region = $state(bottle.region ?? '');
   let grapeVariety = $state<readonly string[]>(bottle.grapeVariety);
+  let consumeStartingFrom = $state(bottle.consumeStartingFrom !== undefined ? String(bottle.consumeStartingFrom) : '');
   let ratingError = $state('');
   let saving = $state(false);
   let allBottles = $state<Bottle[]>([]);
@@ -47,6 +48,7 @@
   const initialCountry = bottle.country;
   const initialRegion = bottle.region ?? '';
   const initialGrapeVariety = JSON.stringify([...bottle.grapeVariety]);
+  const initialConsumeStartingFrom = bottle.consumeStartingFrom !== undefined ? String(bottle.consumeStartingFrom) : '';
 
   const isDirty = $derived(
     rating !== initialRating ||
@@ -54,7 +56,8 @@
     location !== initialLocation ||
     country !== initialCountry ||
     region !== initialRegion ||
-    JSON.stringify([...grapeVariety]) !== initialGrapeVariety
+    JSON.stringify([...grapeVariety]) !== initialGrapeVariety ||
+    consumeStartingFrom !== initialConsumeStartingFrom
   );
 
   async function handleSave(): Promise<void> {
@@ -64,7 +67,7 @@
     try {
       // Strip Svelte 5 reactive proxies — IDB's structured clone can't handle them.
       const plainBottle = $state.snapshot(bottle);
-      const updated = buildUpdatedBottle(plainBottle, { rating, notes, location, country, region, grapeVariety: $state.snapshot(grapeVariety) });
+      const updated = buildUpdatedBottle(plainBottle, { rating, notes, location, country, region, grapeVariety: $state.snapshot(grapeVariety), consumeStartingFrom });
       await updateBottle(updated);
       await enqueueMutation(`Updated bottle: ${bottle.name} ${bottle.vintage}`);
       toastSuccess(`Updated ${bottle.name} ${bottle.vintage}`);
@@ -120,6 +123,9 @@
         <legend class="text-sm font-semibold text-gray-700">Storage & Notes</legend>
         <FormField label="Location" id="edit-location">
           <input id="edit-location" type="text" class="mt-1 block w-full rounded border border-gray-300 px-3 py-2" value={location} oninput={(e) => { location = e.currentTarget.value; }} data-testid="edit-input-location" />
+        </FormField>
+        <FormField label="Drink from" id="edit-consume-starting-from">
+          <input id="edit-consume-starting-from" type="number" class="mt-1 block w-full rounded border border-gray-300 px-3 py-2" value={consumeStartingFrom} oninput={(e) => { consumeStartingFrom = e.currentTarget.value; }} data-testid="edit-input-consume-starting-from" />
         </FormField>
         <FormField label="Notes" id="edit-notes">
           <textarea id="edit-notes" rows="3" class="mt-1 block w-full rounded border border-gray-300 px-3 py-2" value={notes} oninput={(e) => { notes = e.currentTarget.value; }} data-testid="edit-input-notes"></textarea>

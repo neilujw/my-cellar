@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 
 import {
   formatAction,
+  getBottlesToDrinkThisYear,
   getRecentActivity,
   getRecentBottles,
   getStatsByType,
@@ -374,6 +375,80 @@ describe('getRecentBottles', () => {
     ];
 
     expect(getRecentBottles(bottles, 2)).toHaveLength(2);
+  });
+});
+
+describe('getBottlesToDrinkThisYear', () => {
+  const currentYear = 2026;
+
+  it('should return empty array when no bottles match', () => {
+    const bottles = [makeBottle({ consumeStartingFrom: 2030 })];
+
+    expect(getBottlesToDrinkThisYear(bottles, currentYear, 5)).toEqual([]);
+  });
+
+  it('should return bottles with consumeStartingFrom <= current year and quantity > 0', () => {
+    const bottles = [
+      makeBottle({ id: 'a', consumeStartingFrom: 2025 }),
+      makeBottle({ id: 'b', consumeStartingFrom: 2026 }),
+      makeBottle({ id: 'c', consumeStartingFrom: 2030 }),
+    ];
+
+    const result = getBottlesToDrinkThisYear(bottles, currentYear, 5);
+
+    expect(result).toHaveLength(2);
+    expect(result.map((b) => b.id)).toEqual(['a', 'b']);
+  });
+
+  it('should exclude bottles with 0 quantity', () => {
+    const bottles = [
+      makeBottle({
+        id: 'a',
+        consumeStartingFrom: 2025,
+        history: [
+          makeEntry(HistoryAction.Added, 1),
+          makeEntry(HistoryAction.Consumed, 1),
+        ],
+      }),
+      makeBottle({ id: 'b', consumeStartingFrom: 2025 }),
+    ];
+
+    const result = getBottlesToDrinkThisYear(bottles, currentYear, 5);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe('b');
+  });
+
+  it('should exclude bottles without consumeStartingFrom', () => {
+    const bottles = [makeBottle({ id: 'a' })];
+
+    expect(getBottlesToDrinkThisYear(bottles, currentYear, 5)).toEqual([]);
+  });
+
+  it('should sort by consumeStartingFrom ascending', () => {
+    const bottles = [
+      makeBottle({ id: 'a', consumeStartingFrom: 2026 }),
+      makeBottle({ id: 'b', consumeStartingFrom: 2020 }),
+      makeBottle({ id: 'c', consumeStartingFrom: 2024 }),
+    ];
+
+    const result = getBottlesToDrinkThisYear(bottles, currentYear, 5);
+
+    expect(result.map((b) => b.consumeStartingFrom)).toEqual([2020, 2024, 2026]);
+  });
+
+  it('should limit results to the specified count', () => {
+    const bottles = [
+      makeBottle({ id: 'a', consumeStartingFrom: 2020 }),
+      makeBottle({ id: 'b', consumeStartingFrom: 2021 }),
+      makeBottle({ id: 'c', consumeStartingFrom: 2022 }),
+    ];
+
+    expect(getBottlesToDrinkThisYear(bottles, currentYear, 2)).toHaveLength(2);
+  });
+
+  it('should return empty array for empty bottles', () => {
+    expect(getBottlesToDrinkThisYear([], currentYear, 5)).toEqual([]);
   });
 });
 

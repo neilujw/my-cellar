@@ -55,6 +55,7 @@ A personal wine cellar management application that prioritizes data ownership an
   "location": "Rack A, Shelf 2",
   "rating": 8.5,
   "notes": "Exceptional wine, pair with red meat",
+  "consumeStartingFrom": 2025,
   "history": [
     {
       "date": "2024-01-15",
@@ -78,6 +79,7 @@ A personal wine cellar management application that prioritizes data ownership an
 - `location`: Optional field for physical cellar location
 - `rating`: Optional, scale 1-10
 - `notes`: Bottle-level notes (can be updated, no history tracking)
+- `consumeStartingFrom`: Optional year (YYYY) when the wine becomes ready to drink
 - `grapeVariety`: Array of grape varieties
 - `history.action`: Enum: "added", "consumed", "removed"
 - Current quantity is derived from history (sum of added - consumed - removed)

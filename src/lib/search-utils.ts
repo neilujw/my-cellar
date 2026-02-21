@@ -10,6 +10,7 @@ export interface SearchFilters {
   readonly vintageMin: number | undefined;
   readonly vintageMax: number | undefined;
   readonly minRating: number | undefined;
+  readonly readyToDrink: boolean;
 }
 
 /** Available sort options for bottle results. */
@@ -25,6 +26,7 @@ export function createEmptyFilters(): SearchFilters {
     vintageMin: undefined,
     vintageMax: undefined,
     minRating: undefined,
+    readyToDrink: false,
   };
 }
 
@@ -40,6 +42,7 @@ export function countActiveFilters(filters: SearchFilters): number {
   if (filters.vintageMin !== undefined) count++;
   if (filters.vintageMax !== undefined) count++;
   if (filters.minRating !== undefined) count++;
+  if (filters.readyToDrink) count++;
   return count;
 }
 
@@ -86,6 +89,18 @@ export function filterBottles(
     // Minimum rating filter: unrated bottles are excluded
     if (filters.minRating !== undefined) {
       if (bottle.rating === undefined || bottle.rating < filters.minRating) {
+        return false;
+      }
+    }
+
+    // Ready to drink filter: consumeStartingFrom <= current year and quantity > 0
+    if (filters.readyToDrink) {
+      const currentYear = new Date().getFullYear();
+      if (
+        bottle.consumeStartingFrom === undefined ||
+        bottle.consumeStartingFrom > currentYear ||
+        calculateQuantity(bottle.history) <= 0
+      ) {
         return false;
       }
     }

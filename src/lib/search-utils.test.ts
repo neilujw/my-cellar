@@ -231,6 +231,50 @@ describe('filterBottles', () => {
     });
   });
 
+  describe('ready to drink filter', () => {
+    it('should filter by consumeStartingFrom <= current year and quantity > 0 when readyToDrink is true', () => {
+      const currentYear = new Date().getFullYear();
+      const bottles = [
+        makeBottle({ id: '1', consumeStartingFrom: currentYear }),
+        makeBottle({ id: '2', consumeStartingFrom: currentYear + 5 }),
+        makeBottle({ id: '3' }),
+      ];
+
+      const result = filterBottles(bottles, { ...emptyFilters, readyToDrink: true });
+
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe('1');
+    });
+
+    it('should exclude bottles with 0 quantity even if consumeStartingFrom matches', () => {
+      const bottles = [
+        makeBottle({
+          id: '1',
+          consumeStartingFrom: 2020,
+          history: [
+            { date: '2026-01-01', action: HistoryAction.Added, quantity: 1 },
+            { date: '2026-01-02', action: HistoryAction.Consumed, quantity: 1 },
+          ],
+        }),
+      ];
+
+      const result = filterBottles(bottles, { ...emptyFilters, readyToDrink: true });
+
+      expect(result).toHaveLength(0);
+    });
+
+    it('should return all bottles when readyToDrink is false', () => {
+      const bottles = [
+        makeBottle({ id: '1', consumeStartingFrom: 2020 }),
+        makeBottle({ id: '2' }),
+      ];
+
+      const result = filterBottles(bottles, { ...emptyFilters, readyToDrink: false });
+
+      expect(result).toHaveLength(2);
+    });
+  });
+
   describe('combined filters', () => {
     it('should apply multiple filters with AND logic', () => {
       const bottles = [
@@ -413,9 +457,19 @@ describe('countActiveFilters', () => {
       vintageMin: 2010,
       vintageMax: undefined,
       minRating: 7,
+      readyToDrink: false,
     };
 
     // types + country + vintageMin + minRating = 4 (searchText is excluded)
     expect(countActiveFilters(filters)).toBe(4);
+  });
+
+  it('should count readyToDrink when enabled', () => {
+    const filters: SearchFilters = {
+      ...createEmptyFilters(),
+      readyToDrink: true,
+    };
+
+    expect(countActiveFilters(filters)).toBe(1);
   });
 });

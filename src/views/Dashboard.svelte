@@ -9,6 +9,7 @@
   import { WineType, type Bottle } from '../lib/types';
   import {
     formatAction,
+    getBottlesToDrinkThisYear,
     getRecentActivity,
     getRecentBottles,
     getStatsByType,
@@ -41,6 +42,8 @@
   const statsByType = $derived(getStatsByType(bottles));
   const topRegions = $derived(getTopRegions(bottles, 3));
   const recentActivity = $derived(getRecentActivity(bottles, 10));
+  const currentYear = new Date().getFullYear();
+  const bottlesToDrink = $derived(getBottlesToDrinkThisYear(bottles, currentYear, 5));
   const recentBottles = $derived(getRecentBottles(bottles, 5));
   const hasBottles = $derived(bottles.length > 0);
 
@@ -108,6 +111,18 @@
         </div>
       {/if}
     </section>
+
+    <!-- Bottles to Drink This Year -->
+    {#if bottlesToDrink.length > 0}
+      <section class="mt-6" aria-label="Bottles to drink this year">
+        <h3 class="text-sm font-semibold text-gray-700">Bottles to Drink This Year</h3>
+        <div class="mt-2 space-y-2" data-testid="bottles-to-drink">
+          {#each bottlesToDrink as bottle (bottle.id)}
+            <BottleCard {bottle} onclick={(b) => { selectedBottle = b; }} onupdate={() => loadBottles()} />
+          {/each}
+        </div>
+      </section>
+    {/if}
 
     <!-- Recent Bottles -->
     {#if recentBottles.length > 0}

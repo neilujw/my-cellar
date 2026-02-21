@@ -39,7 +39,7 @@
 
   function clearFilters(): void {
     const empty = createEmptyFilters();
-    onchange({ ...filters, types: empty.types, country: empty.country, region: empty.region, vintageMin: empty.vintageMin, vintageMax: empty.vintageMax, minRating: empty.minRating });
+    onchange({ ...filters, types: empty.types, country: empty.country, region: empty.region, vintageMin: empty.vintageMin, vintageMax: empty.vintageMax, minRating: empty.minRating, readyToDrink: empty.readyToDrink });
   }
 
   const inputClass = 'w-full rounded border border-gray-300 px-2 py-1.5 text-sm';
@@ -103,6 +103,11 @@
       <div>
         <label for="filter-rating" class={labelClass}>Minimum rating</label>
         <input id="filter-rating" type="number" min="1" max="10" placeholder="Any" class={inputClass} value={filters.minRating ?? ''} onchange={(e) => set('minRating', parseOptionalNumber(e.currentTarget.value))} data-testid="filter-rating" />
+      </div>
+
+      <div class="flex items-center gap-2">
+        <input id="filter-ready-to-drink" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-indigo-600" checked={filters.readyToDrink} onchange={(e) => set('readyToDrink', e.currentTarget.checked)} data-testid="filter-ready-to-drink" />
+        <label for="filter-ready-to-drink" class="text-sm text-gray-700">Ready to drink</label>
       </div>
 
       <button

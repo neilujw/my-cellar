@@ -77,6 +77,7 @@ describe("AddBottle", () => {
       expect(screen.getByTestId("input-price")).toBeInTheDocument();
       expect(screen.getByTestId("input-currency")).toBeInTheDocument();
       expect(screen.getByTestId("input-notes")).toBeInTheDocument();
+      expect(screen.getByTestId("input-consume-starting-from")).toBeInTheDocument();
       expect(screen.getByTestId("input-history-notes")).toBeInTheDocument();
       expect(screen.getByTestId("submit-button")).toBeInTheDocument();
     });

@@ -64,7 +64,7 @@ describe('serializeBottle', () => {
   });
 
   it('should maintain consistent key ordering matching PROJECT.md schema', () => {
-    const bottle = makeBottle({ location: 'Rack A', rating: 8.5, notes: 'Great wine' });
+    const bottle = makeBottle({ location: 'Rack A', rating: 8.5, notes: 'Great wine', consumeStartingFrom: 2025 });
     const json = serializeBottle(bottle);
     const parsed = JSON.parse(json);
     const keys = Object.keys(parsed);
@@ -80,6 +80,7 @@ describe('serializeBottle', () => {
       'location',
       'rating',
       'notes',
+      'consumeStartingFrom',
       'history',
     ]);
   });
@@ -177,6 +178,32 @@ describe('deserializeBottle', () => {
     const bottle = rest as Bottle;
     const json = serializeBottle(bottle);
     expect(deserializeBottle(json)).toEqual(bottle);
+  });
+
+  it('should accept bottle with consumeStartingFrom', () => {
+    const bottle = makeBottle({ consumeStartingFrom: 2028 });
+    const json = serializeBottle(bottle);
+    const result = deserializeBottle(json);
+
+    expect(result.consumeStartingFrom).toBe(2028);
+  });
+
+  it('should accept bottle without consumeStartingFrom', () => {
+    const bottle = makeBottle();
+    const json = serializeBottle(bottle);
+    const result = deserializeBottle(json);
+
+    expect(result.consumeStartingFrom).toBeUndefined();
+  });
+
+  it('should throw when consumeStartingFrom is not an integer', () => {
+    const data = { ...makeBottle(), consumeStartingFrom: 2025.5 };
+    expect(() => deserializeBottle(JSON.stringify(data))).toThrow('Invalid "consumeStartingFrom": expected integer');
+  });
+
+  it('should throw when consumeStartingFrom is not a number', () => {
+    const data = { ...makeBottle(), consumeStartingFrom: '2025' };
+    expect(() => deserializeBottle(JSON.stringify(data))).toThrow('Invalid "consumeStartingFrom": expected integer');
   });
 
   it('should accept history entry without price and notes', () => {

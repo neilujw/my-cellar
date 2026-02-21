@@ -65,6 +65,7 @@
       location: bottle.location ?? '',
       rating: bottle.rating ? String(bottle.rating) : '',
       notes: bottle.notes ?? '',
+      consumeStartingFrom: bottle.consumeStartingFrom ? String(bottle.consumeStartingFrom) : '',
     };
   }
 
@@ -227,6 +228,9 @@
       <legend class="text-sm font-semibold text-gray-700">Storage</legend>
       <FormField label="Location" id="location">
         <input id="location" type="text" class="mt-1 block w-full rounded border border-gray-300 px-3 py-2" readonly={!!selectedBottle} value={form.location} oninput={(e) => set('location', e.currentTarget.value)} data-testid="input-location" />
+      </FormField>
+      <FormField label="Drink from" id="consume-starting-from" error={errors.consumeStartingFrom} errorTestId="error-consume-starting-from">
+        <input id="consume-starting-from" type="number" class="mt-1 block w-full rounded border border-gray-300 px-3 py-2" value={form.consumeStartingFrom} oninput={(e) => set('consumeStartingFrom', e.currentTarget.value)} data-testid="input-consume-starting-from" />
       </FormField>
     </fieldset>
 

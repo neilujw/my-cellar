@@ -110,6 +110,26 @@ export function getRecentBottles(bottles: readonly Bottle[], limit: number): Bot
 }
 
 /**
+ * Returns bottles ready to drink this year (consumeStartingFrom <= currentYear and quantity > 0).
+ * Sorted by consumeStartingFrom ascending, limited to the specified count.
+ */
+export function getBottlesToDrinkThisYear(
+  bottles: readonly Bottle[],
+  currentYear: number,
+  limit: number,
+): Bottle[] {
+  return [...bottles]
+    .filter(
+      (b) =>
+        b.consumeStartingFrom !== undefined &&
+        b.consumeStartingFrom <= currentYear &&
+        calculateQuantity(b.history) > 0,
+    )
+    .sort((a, b) => a.consumeStartingFrom! - b.consumeStartingFrom!)
+    .slice(0, limit);
+}
+
+/**
  * Formats a history action for display.
  * Capitalizes the first letter (e.g., "added" -> "Added").
  */

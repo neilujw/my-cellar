@@ -73,6 +73,49 @@ describe('BottleCard', () => {
     expect(screen.getByTestId('bottle-card-type')).toHaveTextContent('Sparkling');
   });
 
+  describe('ready to drink badge', () => {
+    it('should show badge when consumeStartingFrom is set and <= current year and quantity > 0', () => {
+      const currentYear = new Date().getFullYear();
+      const bottle = makeBottle({ consumeStartingFrom: currentYear });
+      render(BottleCard, { props: { bottle } });
+
+      expect(screen.getByTestId('bottle-card-ready')).toHaveTextContent('Ready to drink');
+    });
+
+    it('should show badge when consumeStartingFrom is in the past', () => {
+      const bottle = makeBottle({ consumeStartingFrom: 2020 });
+      render(BottleCard, { props: { bottle } });
+
+      expect(screen.getByTestId('bottle-card-ready')).toBeInTheDocument();
+    });
+
+    it('should not show badge when consumeStartingFrom is in the future', () => {
+      const bottle = makeBottle({ consumeStartingFrom: 2099 });
+      render(BottleCard, { props: { bottle } });
+
+      expect(screen.queryByTestId('bottle-card-ready')).not.toBeInTheDocument();
+    });
+
+    it('should not show badge when consumeStartingFrom is not set', () => {
+      render(BottleCard, { props: { bottle: makeBottle() } });
+
+      expect(screen.queryByTestId('bottle-card-ready')).not.toBeInTheDocument();
+    });
+
+    it('should not show badge when quantity is 0', () => {
+      const bottle = makeBottle({
+        consumeStartingFrom: 2020,
+        history: [
+          { date: '2026-01-01', action: HistoryAction.Added, quantity: 1 },
+          { date: '2026-01-02', action: HistoryAction.Consumed, quantity: 1 },
+        ],
+      });
+      render(BottleCard, { props: { bottle } });
+
+      expect(screen.queryByTestId('bottle-card-ready')).not.toBeInTheDocument();
+    });
+  });
+
   describe('click handler', () => {
     it('should call onclick with the bottle when clicked', async () => {
       const onclick = vi.fn();

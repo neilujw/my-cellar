@@ -20,6 +20,7 @@ export function buildUpdatedBottle(
     country: string;
     region: string;
     grapeVariety: readonly string[];
+    consumeStartingFrom: string;
   },
 ): Bottle {
   return {
@@ -30,6 +31,7 @@ export function buildUpdatedBottle(
     country: fields.country,
     region: fields.region || undefined,
     grapeVariety: [...fields.grapeVariety],
+    consumeStartingFrom: fields.consumeStartingFrom !== '' ? Number(fields.consumeStartingFrom) : undefined,
     history: original.history.map((entry) => ({
       ...entry,
       price: entry.price ? { ...entry.price } : undefined,

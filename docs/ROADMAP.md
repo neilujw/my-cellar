@@ -1,6 +1,6 @@
 # Roadmap
 
-Updated at 2026-02-17
+Updated at 2026-02-21
 
 ## Step 1: Project Setup & Foundation ✅
 - [x] Initialize Svelte + Vite project with mobile-first configuration
@@ -101,10 +101,16 @@ Updated at 2026-02-17
 - [x] Implement manual pull on sync icon click when queue is empty
 - [x] Update sync status indicator to show "N changes pending" state
 
-## Step 16: Drinking Window (Consume Starting From)
-- [ ] Add "consumeStartingFrom" field to bottle data model (year format: YYYY)
-- [ ] Add optional year input field to Add Bottle form
-- [ ] Display drinking window indicator on bottle cards (e.g., "Drink from 2028")
-- [ ] Include field in edit bottle functionality (Step 13)
-- [ ] Add visual indicator for bottles ready to drink vs aging
-- [ ] Add "Bottles to Drink This Year" section on dashboard (consumeStartingFrom ≤ current year)
+## Step 16: Drinking Window (Consume Starting From) ✅
+- [x] Add "consumeStartingFrom" field to bottle data model (year format: YYYY)
+- [x] Add optional year input field to Add Bottle form
+- [x] Display drinking window indicator on bottle cards (e.g., "Drink from 2028")
+- [x] Include field in edit bottle functionality (Step 13)
+- [x] Add visual indicator for bottles ready to drink vs aging
+- [x] Add "Bottles to Drink This Year" section on dashboard (consumeStartingFrom ≤ current year)
+- [x] Add "Ready to drink" toggle filter in Search
+
+## Step 17: UX Polish — Vintage & Search
+- [ ] Accept vintage value `0` as "no vintage" in Add Bottle form (e.g., via a "No vintage" checkbox or entering 0)
+- [ ] Display "N/A" instead of `0` for vintage everywhere a bottle is shown (cards, detail modal, search results, dashboard)
+- [ ] Implement accent-insensitive name search: normalize accented characters to ASCII equivalents before comparison (e.g., é → e, à → a, ü → u) so searching "e" matches "é" and vice versa

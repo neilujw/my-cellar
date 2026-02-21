@@ -81,6 +81,20 @@ describe('BottleDetail', () => {
       expect(screen.queryByTestId('detail-rating')).not.toBeInTheDocument();
     });
 
+    it('should display drink from year when consumeStartingFrom is set', () => {
+      const bottle = makeBottle({ consumeStartingFrom: 2028 });
+      render(BottleDetail, { props: { bottle, onclose: vi.fn(), onupdate: vi.fn() } });
+
+      expect(screen.getByTestId('detail-consume-starting-from')).toHaveTextContent('Drink from 2028');
+    });
+
+    it('should not display drink from when consumeStartingFrom is not set', () => {
+      const bottle = makeBottle();
+      render(BottleDetail, { props: { bottle, onclose: vi.fn(), onupdate: vi.fn() } });
+
+      expect(screen.queryByTestId('detail-consume-starting-from')).not.toBeInTheDocument();
+    });
+
     it('should not show location when not set', () => {
       const bottle = makeBottle({ location: undefined });
       render(BottleDetail, { props: { bottle, onclose: vi.fn(), onupdate: vi.fn() } });

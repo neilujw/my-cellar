@@ -24,6 +24,7 @@ const BOTTLE_KEY_ORDER: ReadonlyArray<keyof Bottle> = [
   'location',
   'rating',
   'notes',
+  'consumeStartingFrom',
   'history',
 ];
 
@@ -124,6 +125,7 @@ function validateBottleData(data: unknown): string | null {
   if (obj.location !== undefined && typeof obj.location !== 'string') return 'Invalid "location": expected string';
   if (obj.rating !== undefined && typeof obj.rating !== 'number') return 'Invalid "rating": expected number';
   if (obj.notes !== undefined && typeof obj.notes !== 'string') return 'Invalid "notes": expected string';
+  if (obj.consumeStartingFrom !== undefined && (typeof obj.consumeStartingFrom !== 'number' || !Number.isInteger(obj.consumeStartingFrom))) return 'Invalid "consumeStartingFrom": expected integer';
 
   if (!Array.isArray(obj.history)) return 'Missing or invalid "history"';
   for (let i = 0; i < obj.history.length; i++) {

@@ -115,6 +115,14 @@
         {/if}
       </section>
 
+      <!-- Drink from -->
+      {#if currentBottle.consumeStartingFrom !== undefined}
+        <section>
+          <h4 class="text-sm font-semibold text-gray-700">Drinking Window</h4>
+          <p class="mt-1 text-sm text-gray-600" data-testid="detail-consume-starting-from">Drink from {currentBottle.consumeStartingFrom}</p>
+        </section>
+      {/if}
+
       <!-- Location -->
       {#if currentBottle.location}
         <section>
