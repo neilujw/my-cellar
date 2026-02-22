@@ -24,17 +24,20 @@ test.describe('Add Bottle', () => {
     await expect(page.getByTestId('total-count')).toHaveText('2');
   });
 
-  test('should show validation errors for missing required fields', async ({ page }) => {
+  test('should disable submit button when required fields are empty', async ({ page }) => {
     await page.goto('/');
 
     await page.getByTestId('tab-add').click();
 
-    // Submit without filling any fields
-    await page.getByTestId('submit-button').click();
+    // Submit button should be disabled when required fields are not filled
+    await expect(page.getByTestId('submit-button')).toBeDisabled();
 
-    // Should show validation errors
-    await expect(page.getByTestId('error-name')).toBeVisible();
-    await expect(page.getByTestId('error-vintage')).toBeVisible();
-    await expect(page.getByTestId('error-type')).toBeVisible();
+    // Filling all required fields should enable the submit button
+    await page.getByTestId('input-name').fill('Château Margaux');
+    await page.getByTestId('input-vintage').fill('2018');
+    await page.getByTestId('input-type').selectOption('red');
+    await page.getByTestId('input-country').fill('France');
+    await page.getByTestId('input-quantity').fill('1');
+    await expect(page.getByTestId('submit-button')).toBeEnabled();
   });
 });

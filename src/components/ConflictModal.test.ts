@@ -19,6 +19,7 @@ vi.mock('../lib/storage', () => ({
   clearSyncQueue: vi.fn().mockResolvedValue(undefined),
 }));
 
+import { type SyncResult } from '../lib/types';
 import { createConflictPR, resolveConflictWithRemote } from '../lib/github-sync';
 import { setLastSyncedCommitSha } from '../lib/github-settings';
 import { clearAll, clearSyncQueue } from '../lib/storage';
@@ -30,7 +31,8 @@ const mockedClearAll = vi.mocked(clearAll);
 const mockedClearSyncQueue = vi.mocked(clearSyncQueue);
 
 /** Creates a minimal mock Octokit client. */
-function createMockClient(): unknown {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function createMockClient(): any {
   return {};
 }
 
@@ -179,9 +181,9 @@ describe('ConflictModal', () => {
 
   describe('loading states', () => {
     it('should show loading state on buttons while processing', async () => {
-      let resolvePromise: (value: unknown) => void;
+      let resolvePromise!: (value: SyncResult) => void;
       mockedCreatePR.mockReturnValue(
-        new Promise((resolve) => {
+        new Promise<SyncResult>((resolve) => {
           resolvePromise = resolve;
         }),
       );

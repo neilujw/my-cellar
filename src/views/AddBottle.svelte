@@ -62,7 +62,7 @@
       vintage: String(bottle.vintage),
       type: bottle.type,
       country: bottle.country,
-      region: bottle.region,
+      region: bottle.region ?? '',
       grapeVariety: bottle.grapeVariety,
       location: bottle.location ?? '',
       rating: bottle.rating ? String(bottle.rating) : '',

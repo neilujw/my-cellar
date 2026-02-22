@@ -183,13 +183,13 @@ describe("validateForm", () => {
 
 describe("createBottleFromForm", () => {
   beforeEach(() => {
-    vi.spyOn(crypto, "randomUUID").mockReturnValue("test-uuid-1234");
+    vi.spyOn(crypto, "randomUUID").mockReturnValue("00000000-0000-0000-0000-000000000000");
   });
 
   it("should create a bottle with required fields and initial history entry", () => {
     const bottle = createBottleFromForm(validFormData());
 
-    expect(bottle.id).toBe("test-uuid-1234");
+    expect(bottle.id).toBe("00000000-0000-0000-0000-000000000000");
     expect(bottle.name).toBe("Chateau Margaux");
     expect(bottle.vintage).toBe(2015);
     expect(bottle.type).toBe(WineType.Red);

@@ -24,6 +24,7 @@ vi.mock('../lib/storage', () => ({
   clearSyncQueue: vi.fn().mockResolvedValue(undefined),
 }));
 
+import { WineType, type SyncResult } from '../lib/types';
 import { loadSettings, setLastSyncedCommitSha } from '../lib/github-settings';
 import { createConflictPR, pullFromGitHub } from '../lib/github-sync';
 import { clearSyncQueue } from '../lib/storage';
@@ -132,7 +133,7 @@ describe('SyncSection', () => {
     });
 
     it('should clear sync queue on successful force pull', async () => {
-      mockedPull.mockResolvedValue({ status: 'success', message: 'Done', bottles: [{ id: '1', name: 'W', vintage: 2020, type: 'red', country: 'FR', grapeVariety: [], history: [] }] });
+      mockedPull.mockResolvedValue({ status: 'success', message: 'Done', bottles: [{ id: '1', name: 'W', vintage: 2020, type: WineType.Red, country: 'FR', grapeVariety: [], history: [] }] });
       render(SyncSection);
       const user = userEvent.setup();
 
@@ -145,7 +146,7 @@ describe('SyncSection', () => {
       mockedPull.mockResolvedValue({
         status: 'success',
         message: 'Pulled 2 bottles',
-        bottles: [{ id: '1', name: 'W', vintage: 2020, type: 'red', country: 'FR', grapeVariety: [], history: [] }],
+        bottles: [{ id: '1', name: 'W', vintage: 2020, type: WineType.Red, country: 'FR', grapeVariety: [], history: [] }],
         commitSha: 'pull-sha-456',
       });
       render(SyncSection);
@@ -159,9 +160,9 @@ describe('SyncSection', () => {
 
   describe('loading states', () => {
     it('should show syncing text on buttons while syncing', async () => {
-      let resolvePromise: (value: unknown) => void;
+      let resolvePromise!: (value: SyncResult) => void;
       mockedCreateConflictPR.mockReturnValue(
-        new Promise((resolve) => {
+        new Promise<SyncResult>((resolve) => {
           resolvePromise = resolve;
         }),
       );

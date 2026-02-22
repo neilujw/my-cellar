@@ -3,8 +3,8 @@
    * Main application layout with header, content area, and bottom tab bar.
    * Renders the current view based on the hash router state.
    */
-  import { getCurrentRoute, navigate } from './lib/router.svelte.ts';
-  import type { Route } from './lib/router.svelte.ts';
+  import { getCurrentRoute, navigate } from './lib/router.svelte';
+  import type { Route } from './lib/router.svelte';
   import type { SyncStatus } from './lib/types';
   import { loadSettings } from './lib/github-settings';
   import { createGitHubClient } from './lib/github-client';
