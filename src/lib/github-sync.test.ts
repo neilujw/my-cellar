@@ -229,7 +229,7 @@ describe('pushToGitHub', () => {
     const result = await pushToGitHub(client, 'owner/repo', []);
 
     expect(result.status).toBe('success');
-    const createTreeCall = (client.rest.git.createTree as ReturnType<typeof vi.fn>).mock.calls[0][0];
+    const createTreeCall = (client.rest.git.createTree as unknown as ReturnType<typeof vi.fn>).mock.calls[0][0];
     const deleteEntry = createTreeCall.tree.find(
       (e: { path: string }) => e.path === 'wines/red/wine-old-id.json',
     );
@@ -250,13 +250,13 @@ describe('pushToGitHub', () => {
     await pushToGitHub(client, 'owner/repo', []);
 
     // base_tree is used to preserve non-wine files
-    const createTreeCall = (client.rest.git.createTree as ReturnType<typeof vi.fn>).mock.calls[0][0];
+    const createTreeCall = (client.rest.git.createTree as unknown as ReturnType<typeof vi.fn>).mock.calls[0][0];
     expect(createTreeCall.base_tree).toBe('tree-sha-1');
   });
 
   it('should return error result on API failure', async () => {
     const client = createMockClient();
-    (client.rest.repos.get as ReturnType<typeof vi.fn>).mockRejectedValue(
+    (client.rest.repos.get as unknown as ReturnType<typeof vi.fn>).mockRejectedValue(
       new Error('Network error'),
     );
 
@@ -528,7 +528,7 @@ describe('pullFromGitHub', () => {
 
   it('should return error result on API failure', async () => {
     const client = createMockClient();
-    (client.rest.repos.get as ReturnType<typeof vi.fn>).mockRejectedValue(
+    (client.rest.repos.get as unknown as ReturnType<typeof vi.fn>).mockRejectedValue(
       new Error('API rate limit'),
     );
 
@@ -586,7 +586,7 @@ describe('createConflictPR', () => {
 
     await createConflictPR(client, 'owner/repo', [bottle]);
 
-    const createRefCall = (client.rest.git.createRef as ReturnType<typeof vi.fn>).mock.calls[0][0];
+    const createRefCall = (client.rest.git.createRef as unknown as ReturnType<typeof vi.fn>).mock.calls[0][0];
     expect(createRefCall.ref).toMatch(/^refs\/heads\/conflict\/\d{4}-\d{2}-\d{2}-\d{6}$/);
   });
 
@@ -596,7 +596,7 @@ describe('createConflictPR', () => {
 
     await createConflictPR(client, 'owner/repo', [bottle]);
 
-    const prCall = (client.rest.pulls.create as ReturnType<typeof vi.fn>).mock.calls[0][0];
+    const prCall = (client.rest.pulls.create as unknown as ReturnType<typeof vi.fn>).mock.calls[0][0];
     expect(prCall.title).toMatch(/^Resolve sync conflict - /);
     expect(prCall.body).toContain('1 bottle');
     expect(prCall.body).toContain('Sync Conflict');
@@ -606,7 +606,7 @@ describe('createConflictPR', () => {
 
   it('should return error on API failure', async () => {
     const client = createMockClient();
-    (client.rest.repos.get as ReturnType<typeof vi.fn>).mockRejectedValue(
+    (client.rest.repos.get as unknown as ReturnType<typeof vi.fn>).mockRejectedValue(
       new Error('Network error'),
     );
 
@@ -625,7 +625,7 @@ describe('createConflictPR', () => {
 
     await createConflictPR(client, 'owner/repo', bottles);
 
-    const prCall = (client.rest.pulls.create as ReturnType<typeof vi.fn>).mock.calls[0][0];
+    const prCall = (client.rest.pulls.create as unknown as ReturnType<typeof vi.fn>).mock.calls[0][0];
     expect(prCall.body).toContain('2 bottles');
   });
 });
@@ -668,7 +668,7 @@ describe('resolveConflictWithRemote', () => {
 
   it('should return error when pull fails', async () => {
     const client = createMockClient();
-    (client.rest.repos.get as ReturnType<typeof vi.fn>).mockRejectedValue(
+    (client.rest.repos.get as unknown as ReturnType<typeof vi.fn>).mockRejectedValue(
       new Error('Network error'),
     );
 

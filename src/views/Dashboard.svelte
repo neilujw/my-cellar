@@ -5,7 +5,7 @@
    */
   import { onMount } from 'svelte';
   import { getAllBottles } from '../lib/storage';
-  import { navigate } from '../lib/router.svelte.ts';
+  import { navigate } from '../lib/router.svelte';
   import { WineType, type Bottle } from '../lib/types';
   import {
     formatAction,

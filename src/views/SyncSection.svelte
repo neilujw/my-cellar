@@ -71,7 +71,7 @@
         for (const bottle of pullResult.bottles) {
           await addBottle(bottle);
         }
-        if (pullResult.commitSha) {
+        if (pullResult.status === 'success' && pullResult.commitSha) {
           setLastSyncedCommitSha(pullResult.commitSha);
         }
         await clearSyncQueue();

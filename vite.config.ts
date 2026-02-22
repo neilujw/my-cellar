@@ -1,5 +1,4 @@
-/// <reference types="vitest" />
-import { defineConfig } from 'vite';
+import { defineConfig } from 'vitest/config';
 import { svelte } from '@sveltejs/vite-plugin-svelte';
 import tailwindcss from '@tailwindcss/vite';
 import { readFileSync } from 'node:fs';
@@ -16,9 +15,6 @@ export default defineConfig({
     environment: 'jsdom',
     include: ['src/**/*.test.ts'],
     setupFiles: ['src/test-setup.ts'],
-    define: {
-      __APP_VERSION__: JSON.stringify('0.0.0-test'),
-    },
     // Ensure Svelte resolves client-side code in jsdom environment
     server: {
       deps: {

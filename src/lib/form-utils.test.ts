@@ -183,7 +183,7 @@ describe("validateForm", () => {
 
 describe("createBottleFromForm", () => {
   beforeEach(() => {
-    vi.spyOn(crypto, "randomUUID").mockReturnValue("test-uuid-1234");
+    vi.spyOn(crypto, "randomUUID").mockReturnValue("00000000-0000-0000-0000-000000000000");
   });
 
   it("should create a bottle with required fields and initial history entry", () => {
