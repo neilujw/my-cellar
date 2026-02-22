@@ -1,7 +1,7 @@
 <script lang="ts">
   /** Search view — search, filter, and sort wines in the cellar. */
   import { getAllBottles } from '../lib/storage';
-  import { navigate } from '../lib/router.svelte.ts';
+  import { navigate } from '../lib/router.svelte';
   import { type Bottle } from '../lib/types';
   import {
     createEmptyFilters,

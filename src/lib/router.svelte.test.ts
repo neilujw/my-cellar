@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { getCurrentRoute, navigate } from './router.svelte.ts';
+import { getCurrentRoute, navigate } from './router.svelte';
 
 describe('router', () => {
   beforeEach(() => {

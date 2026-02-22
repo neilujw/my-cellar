@@ -44,14 +44,15 @@ const PRICE_KEY_ORDER: ReadonlyArray<keyof Price> = ['amount', 'currency'];
  * Orders an object's keys according to a specified ordering.
  * Keys not in the ordering are omitted; undefined values are omitted.
  */
-function orderKeys<T extends Record<string, unknown>>(
+function orderKeys<T extends object>(
   obj: T,
   keyOrder: ReadonlyArray<keyof T>,
 ): Record<string, unknown> {
   const ordered: Record<string, unknown> = {};
+  const record = obj as Record<string, unknown>;
   for (const key of keyOrder) {
-    if (obj[key] !== undefined) {
-      ordered[key as string] = obj[key];
+    if (record[key as string] !== undefined) {
+      ordered[key as string] = record[key as string];
     }
   }
   return ordered;
